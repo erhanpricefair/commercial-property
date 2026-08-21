@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    @apply bg-canvas text-ink-800 antialiased;
+    font-feature-settings: "kern", "liga";
+  }
+
+  /* Visible focus for keyboard users on every interactive element. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brass-500 ring-offset-2 ring-offset-canvas;
+  }
+
+  ::selection {
+    @apply bg-brass-200 text-ink-900;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+  }
+
+  .container-narrow {
+    @apply mx-auto w-full max-w-3xl px-5 sm:px-8;
+  }
+
+  .eyebrow {
+    @apply text-eyebrow font-semibold uppercase tracking-[0.16em] text-brass-600;
+  }
+
+  /* Buttons — 48px min height so every tap target clears the iOS guideline. */
+  .btn {
+    @apply inline-flex min-h-[3rem] items-center justify-center gap-2 rounded-xl px-6
+           text-[0.9375rem] font-semibold leading-none transition
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-ink-900 text-canvas shadow-card hover:bg-ink-700 active:bg-ink-800;
+  }
+
+  .btn-secondary {
+    @apply btn border border-ink-200 bg-canvas-raised text-ink-800 hover:border-ink-300 hover:bg-canvas-sunken;
+  }
+
+  .btn-ghost {
+    @apply btn px-4 text-ink-600 hover:text-ink-900;
+  }
+
+  .btn-brass {
+    @apply btn bg-brass-500 text-white shadow-card hover:bg-brass-600;
+  }
+
+  .card {
+    @apply rounded-2xl border border-ink-100 bg-canvas-raised p-6 shadow-card sm:p-8;
+  }
+
+  .field-label {
+    @apply mb-2 block text-sm font-semibold text-ink-800;
+  }
+
+  .field-input {
+    @apply w-full rounded-xl border border-ink-200 bg-canvas-raised px-4 py-3.5 text-base
+           text-ink-900 placeholder:text-ink-400
+           focus:border-ink-400 focus:outline-none focus:ring-2 focus:ring-brass-200;
+  }
+
+  .field-error {
+    @apply mt-1.5 text-sm font-medium text-signal-hot;
+  }
+
+  /* Large, thumb-friendly choice buttons for the qualification form. */
+  .choice {
+    @apply flex min-h-[3.5rem] w-full items-center gap-3 rounded-xl border border-ink-200
+           bg-canvas-raised px-4 py-3.5 text-left text-base font-medium text-ink-800
+           transition hover:border-ink-300 hover:bg-canvas-sunken
+           active:scale-[0.995];
+  }
+
+  .choice-selected {
+    @apply border-ink-900 bg-ink-900 text-canvas hover:border-ink-900 hover:bg-ink-800;
+  }
+
+  .prose-editorial {
+    @apply max-w-prose text-[1.0625rem] leading-[1.75] text-ink-600;
+  }
+
+  .prose-editorial p + p {
+    @apply mt-5;
+  }
+
+  .rule {
+    @apply h-px w-full bg-ink-100;
+  }
+}

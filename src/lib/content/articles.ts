@@ -1,0 +1,638 @@
+/**
+ * Resources / blog articles.
+ *
+ * All content is generic education. No article names a developer, a project, an
+ * address, a lot or unit number, or ties a figure to an identifiable property.
+ * Any numbers used are explicitly labelled as illustrative.
+ *
+ * Every article closes with the same conversion prompt: "Looking for commercial
+ * property opportunities?" → Register for Investor Access. That block is
+ * rendered by the article template, so it can never be forgotten on a new post.
+ */
+
+export type ArticleBlock =
+  | { type: "p"; text: string }
+  | { type: "h2"; text: string }
+  | { type: "h3"; text: string }
+  | { type: "ul"; items: string[] }
+  | { type: "ol"; items: string[] }
+  | { type: "callout"; title: string; text: string };
+
+export type Article = {
+  slug: string;
+  title: string;
+  metaTitle: string;
+  metaDescription: string;
+  excerpt: string;
+  category: "Getting Started" | "Income & Returns" | "Due Diligence" | "Asset Types";
+  readMinutes: number;
+  published: string;
+  art: "warehouse" | "industrial" | "storage" | "commercial" | "streetscape";
+  blocks: ArticleBlock[];
+};
+
+const DISCLAIMER_BLOCK: ArticleBlock = {
+  type: "callout",
+  title: "General information only",
+  text: "This article is general information and does not constitute financial, legal, taxation or investment advice. It does not take into account your objectives, financial situation or needs. Commercial property involves risks. Obtain independent professional advice before making any investment decision.",
+};
+
+export const ARTICLES: Article[] = [
+  {
+    slug: "commercial-property-investment-for-beginners",
+    title: "Commercial Property Investment for Beginners",
+    metaTitle: "Commercial Property Investment for Beginners | Investor Guide",
+    metaDescription:
+      "A plain-English introduction to commercial property investment in Australia: how it differs from residential, what you're buying, and what to understand before you start.",
+    excerpt:
+      "How commercial property differs from residential, what you're actually buying, and the things worth understanding before you look at your first property.",
+    category: "Getting Started",
+    readMinutes: 8,
+    published: "2026-02-10",
+    art: "commercial",
+    blocks: [
+      { type: "p", text: "Most Australian property investors start with residential. It's familiar — you've rented, you've probably owned a home, and the mechanics are intuitive. Commercial property is less familiar, and that unfamiliarity is what stops many investors from looking at it seriously." },
+      { type: "p", text: "The good news is that the fundamentals aren't complicated. The differences are real, but they're learnable, and understanding them is most of the work." },
+      { type: "h2", text: "What makes commercial different" },
+      { type: "p", text: "The single biggest difference is that your tenant is a business, operating under a lease that the two of you negotiate rather than a standard-form residential agreement. That lease determines the rent, how long it runs, how it's reviewed, who pays the running costs and what happens at the end." },
+      { type: "p", text: "The second difference follows from the first: commercial property is valued largely on its income. A residential valuer leans on comparable sales. A commercial valuer leans on what the property earns and how secure that income looks. Improve the lease and you improve the value." },
+      { type: "ul", items: [
+        "Leases are typically longer and are individually negotiated",
+        "Outgoings are often partly or wholly recoverable from the tenant, depending on the lease",
+        "Vacancy periods tend to be longer, and re-letting costs more",
+        "Finance terms differ — larger deposits, shorter loan terms, different assessment",
+        "GST commonly applies to commercial transactions",
+        "Value is driven by income and lease strength as much as by comparable sales",
+      ] },
+      { type: "h2", text: "What you're actually buying" },
+      { type: "p", text: "When you buy a tenanted commercial property, you're buying two assets at once: the physical building and the lease attached to it. Investors who focus only on the building get surprised later." },
+      { type: "p", text: "Two physically identical units can be quite different investments if one has four years remaining on a lease to an established business with fixed 3% reviews, and the other has six months remaining to a struggling operator with no security held." },
+      { type: "h2", text: "The main asset types" },
+      { type: "ul", items: [
+        "Industrial and warehouse — functional space for storage, distribution, manufacturing and trades",
+        "Small commercial units — compact strata space suiting small businesses",
+        "Storage — the smallest capital commitment, usually within a purpose-built complex",
+        "Retail — highly location-dependent, sensitive to foot traffic and neighbouring tenants",
+        "Office — from suburban suites to CBD floors, with demand patterns that have shifted considerably",
+      ] },
+      { type: "h2", text: "How much do you need?" },
+      { type: "p", text: "There's no single figure. Entry prices vary widely by asset type and location, and your lending position matters as much as the asking price. Commercial lenders typically want a larger deposit than residential lenders and will assess the lease and the tenant alongside your own position." },
+      { type: "p", text: "The practical move is to speak to a broker or lender who works in commercial lending before you start looking. Knowing your real capacity saves months of looking at the wrong things." },
+      { type: "h2", text: "What to understand before you start" },
+      { type: "ol", items: [
+        "How to read a commercial lease, or who will read it for you",
+        "The difference between gross and net rent, and why comparing them is meaningless",
+        "What outgoings the property carries and which are recoverable",
+        "How long comparable properties take to lease in your target area",
+        "What your finance position actually allows",
+        "How long you could hold the property with no rental income at all",
+      ] },
+      { type: "h2", text: "The risks" },
+      { type: "p", text: "Commercial property carries vacancy risk, tenant default risk, unrecoverable outgoings, capital expenditure requirements and market risk. It can be less liquid than residential property — the buyer pool for a specialised asset is smaller." },
+      { type: "p", text: "None of that makes it a bad investment. It makes it an investment that rewards preparation. The investors who do well in commercial are generally the ones who did the reading first." },
+      DISCLAIMER_BLOCK,
+    ],
+  },
+  {
+    slug: "what-to-look-for-when-buying-a-small-warehouse",
+    title: "What to Look for When Buying a Small Warehouse",
+    metaTitle: "What to Look for When Buying a Small Warehouse | Investor Guide",
+    metaDescription:
+      "A practical checklist for assessing a small warehouse investment: specification, access, zoning, lease terms, owners corporation and tenant demand.",
+    excerpt:
+      "Specification, access, zoning, the lease and the owners corporation — the practical things that decide whether a small warehouse leases easily or sits empty.",
+    category: "Asset Types",
+    readMinutes: 7,
+    published: "2026-02-24",
+    art: "warehouse",
+    blocks: [
+      { type: "p", text: "Small warehouses are one of the most common entry points into commercial property. They're simple buildings with a broad base of small-business tenants, and they're often available at price points that work for a first commercial purchase." },
+      { type: "p", text: "Simple doesn't mean uniform, though. The difference between a unit that leases in three weeks and one that sits vacant for eight months usually comes down to details that are easy to check before you buy." },
+      { type: "h2", text: "Specification: can a tenant actually use it?" },
+      { type: "p", text: "Start with the practical. Warehouse tenants have physical requirements, and a unit that fails one of them is off their list regardless of price." },
+      { type: "ul", items: [
+        "Internal clearance height — determines what racking and equipment fit",
+        "Roller door dimensions — can a delivery vehicle get in?",
+        "Truck access and turning circle within the complex",
+        "Three-phase power, and the available capacity",
+        "Floor loading capacity",
+        "Office and amenities component, and whether it's the right proportion",
+        "Parking allocation, including for staff and visitors",
+      ] },
+      { type: "h2", text: "Zoning and permitted use" },
+      { type: "p", text: "Confirm the zoning with the local council and understand what uses are permitted. A unit that can only be used for a narrow category of activity has a narrower tenant pool, which affects both vacancy risk and resale." },
+      { type: "p", text: "Pay attention to anything that requires a permit. If your prospective tenant's use needs approval that hasn't been obtained, that's a delay at best and a deal-breaker at worst." },
+      { type: "h2", text: "The owners corporation" },
+      { type: "p", text: "Most small warehouses are strata-titled within a larger complex. That means an owners corporation, and the records tell you a lot." },
+      { type: "ul", items: [
+        "Current levy amounts and how they've moved over recent years",
+        "Sinking fund balance relative to the age and condition of the complex",
+        "Recent minutes — disputes, deferred works, insurance issues",
+        "Any special levies raised or foreshadowed",
+        "Insurance cover and whether the sum insured is current",
+        "The mix of owner-occupiers and investors in the complex",
+      ] },
+      { type: "h2", text: "If it's tenanted, read the lease" },
+      { type: "ul", items: [
+        "Term remaining, and who holds any options",
+        "Rent review mechanism and the date of the next review",
+        "Which outgoings are recoverable and how they're apportioned",
+        "Repair obligations, particularly structural items",
+        "Make-good obligations at expiry",
+        "Security held — bank guarantee, bond, personal guarantees",
+        "Arrears history",
+      ] },
+      { type: "h2", text: "Tenant demand in the precinct" },
+      { type: "p", text: "The single most useful piece of research is finding out how long comparable units in the same area take to lease, and at what rent. Local commercial agents will usually tell you. If comparable stock is sitting for months, factor that into your numbers." },
+      { type: "callout", title: "Ask the uncomfortable question", text: "Before you buy, work out what the investment looks like if the property is vacant for six months. If that scenario is unmanageable, the property may be the wrong size or the wrong price for your position." },
+      DISCLAIMER_BLOCK,
+    ],
+  },
+  {
+    slug: "commercial-vs-residential-property-investment",
+    title: "Commercial vs Residential Property Investment",
+    metaTitle: "Commercial vs Residential Property Investment | Comparison",
+    metaDescription:
+      "How commercial and residential property investment differ: leases, outgoings, vacancy, finance, valuation and liquidity. Neither is better — they suit different objectives.",
+    excerpt:
+      "Leases, outgoings, vacancy, finance and liquidity all work differently. Neither sector is better than the other — they suit different objectives.",
+    category: "Getting Started",
+    readMinutes: 7,
+    published: "2026-03-06",
+    art: "streetscape",
+    blocks: [
+      { type: "p", text: "Investors often want a verdict: which is better? It isn't a question with a general answer. Commercial and residential property behave differently, carry different risks and suit different objectives. The useful exercise is understanding the differences, not ranking them." },
+      { type: "h2", text: "Leases" },
+      { type: "p", text: "Residential leases are typically six to twelve months and largely standard-form. Commercial leases are typically multi-year and individually negotiated, with terms covering rent reviews, outgoings recovery, repair obligations, permitted use and make-good." },
+      { type: "p", text: "Longer leases can mean more predictable income — but only if the tenant performs. A long lease is a promise, not a guarantee." },
+      { type: "h2", text: "Outgoings" },
+      { type: "p", text: "In residential, the owner generally bears rates, insurance and maintenance. In commercial, many of these may be recoverable from the tenant, depending on the lease. That difference is why gross and net figures must never be compared directly." },
+      { type: "h2", text: "Vacancy" },
+      { type: "p", text: "Residential vacancy is usually measured in weeks. Commercial vacancy can be measured in months, particularly for specialised space. Meanwhile the outgoings continue." },
+      { type: "h2", text: "Finance" },
+      { type: "ul", items: [
+        "Commercial lending generally requires a larger deposit",
+        "Loan terms are often shorter, and may include review or revaluation clauses",
+        "Lenders assess the lease and the tenant alongside your own position",
+        "Specialised assets may attract more conservative terms",
+        "Residential lending is more standardised and more competitive",
+      ] },
+      { type: "h2", text: "Valuation" },
+      { type: "p", text: "Residential value leans on comparable sales. Commercial value leans on income and lease strength. This is significant: in commercial, improving the lease can improve the value independently of the market. It also works the other way — losing a tenant can reduce value even if nothing physical has changed." },
+      { type: "h2", text: "Liquidity" },
+      { type: "p", text: "Residential property has a deep buyer pool. Commercial buyer pools are shallower, and for specialised assets they can be very shallow. That affects how quickly you can exit and at what price." },
+      { type: "h2", text: "Tax and GST" },
+      { type: "p", text: "GST commonly applies to commercial transactions, and going-concern provisions may apply where a property sells with a tenant in place. Land tax treatment can also differ. Speak to your accountant before you commit — this is not an area to work out afterwards." },
+      { type: "callout", title: "The honest summary", text: "Commercial can offer longer leases and outgoings recovery, with longer vacancies, tighter finance and lower liquidity. Residential offers depth and simplicity, with shorter leases and owner-borne costs. Which suits you depends on your objectives, your capital and your tolerance for a vacant property." },
+      DISCLAIMER_BLOCK,
+    ],
+  },
+  {
+    slug: "how-commercial-property-rental-income-works",
+    title: "How Commercial Property Rental Income Works",
+    metaTitle: "How Commercial Property Rental Income Works | Investor Guide",
+    metaDescription:
+      "Gross vs net rent, rent reviews, outgoings recovery and what actually reaches your pocket. How commercial rental income is structured in Australia.",
+    excerpt:
+      "Gross versus net, how rent reviews work, what outgoings recovery means in practice, and how to work out what actually reaches your pocket.",
+    category: "Income & Returns",
+    readMinutes: 6,
+    published: "2026-03-18",
+    art: "industrial",
+    blocks: [
+      { type: "p", text: "Commercial rent looks simple on a listing and gets more complicated the closer you look. Understanding the structure is what separates a realistic assessment from an optimistic one." },
+      { type: "h2", text: "Gross rent versus net rent" },
+      { type: "p", text: "Gross rent is the total the tenant pays, from which the owner then meets the outgoings. Net rent is what the owner receives after the tenant has separately met the recoverable outgoings." },
+      { type: "p", text: "The two figures answer different questions, and comparing a gross figure on one property to a net figure on another will mislead you every time. Establish which you're being quoted before you compare anything." },
+      { type: "h2", text: "Rent reviews" },
+      { type: "p", text: "Commercial leases set out how and when rent changes. The mechanism matters more than most investors expect." },
+      { type: "ul", items: [
+        "Fixed percentage — a set increase each year, predictable but potentially below or above market over time",
+        "CPI-linked — tracks inflation, which can be favourable or unfavourable depending on conditions",
+        "Market review — the rent is reset to market at intervals, which cuts both ways",
+        "Ratchet clauses — where present, they prevent the rent falling at a market review; their enforceability varies by jurisdiction and lease type",
+      ] },
+      { type: "h2", text: "Outgoings recovery" },
+      { type: "p", text: "Where the lease makes outgoings recoverable, the tenant reimburses the owner for specified costs — commonly rates, water, insurance and owners corporation levies. Structural repairs and capital items generally remain with the owner." },
+      { type: "p", text: "Recovery is only as good as the lease drafting and the tenant's ability to pay. During a vacancy, recovery stops entirely and the outgoings continue." },
+      { type: "h2", text: "Working out what you actually receive" },
+      { type: "p", text: "As an illustration only: a property quoted at $40,000 gross with $9,000 of outgoings, of which $6,000 is recoverable, produces net income to the owner of $37,000 before management costs, finance costs and any vacancy. These figures are illustrative and are not drawn from any specific property." },
+      { type: "p", text: "Then account for the things the headline never shows: management fees, periodic maintenance, the cost of re-letting when the lease expires, and any period without a tenant." },
+      { type: "h2", text: "Security and arrears" },
+      { type: "p", text: "Ask what security is held — a bank guarantee, a bond, a personal or company guarantee — and ask for the arrears history. Income that has been paid late for two years is a different proposition to income that has been paid on time." },
+      DISCLAIMER_BLOCK,
+    ],
+  },
+  {
+    slug: "what-are-outgoings-in-commercial-property",
+    title: "What Are Outgoings in Commercial Property?",
+    metaTitle: "What Are Outgoings in Commercial Property? | Investor Guide",
+    metaDescription:
+      "Outgoings explained: what they include, which are recoverable from a tenant, how they're apportioned, and why they change your return more than investors expect.",
+    excerpt:
+      "What outgoings include, which ones a tenant may reimburse, how they're apportioned, and why they change your return more than most investors expect.",
+    category: "Income & Returns",
+    readMinutes: 6,
+    published: "2026-03-30",
+    art: "commercial",
+    blocks: [
+      { type: "p", text: "Outgoings are the running costs of owning a commercial property. They're the least glamorous part of the investment and one of the most consequential, because they sit between the rent a tenant pays and the income you actually keep." },
+      { type: "h2", text: "What outgoings typically include" },
+      { type: "ul", items: [
+        "Council rates",
+        "Water rates and usage charges",
+        "Building insurance",
+        "Owners corporation or body corporate levies",
+        "Land tax, where applicable — treatment varies by state and by lease type",
+        "Repairs and maintenance",
+        "Property management fees",
+        "Fire services, essential safety measures and compliance costs",
+        "Cleaning and common area costs, where applicable",
+      ] },
+      { type: "h2", text: "Recoverable versus non-recoverable" },
+      { type: "p", text: "Recoverable outgoings are those the lease requires the tenant to reimburse. Non-recoverable outgoings come out of your return. Which is which is determined by the lease, not by convention — never assume." },
+      { type: "p", text: "Structural repairs and capital works generally remain with the owner. In some jurisdictions, retail leasing legislation restricts what can be recovered from certain tenants, which is another reason to know what kind of lease you're dealing with." },
+      { type: "h2", text: "Apportionment in a strata property" },
+      { type: "p", text: "In a multi-unit complex, outgoings that relate to common property are apportioned between owners, typically by lot entitlement. Your share is set by the owners corporation structure, not by your unit's rent." },
+      { type: "p", text: "Check the owners corporation budget and the sinking fund. An underfunded sinking fund in an ageing complex often means a special levy at some point, and special levies are not usually recoverable from a tenant." },
+      { type: "h2", text: "Why outgoings decide the real return" },
+      { type: "p", text: "As an illustration only: a property at $500,000 with $30,000 of net income shows a 6% net yield. If $6,000 of assumed recoveries turn out not to be recoverable, the return falls to $24,000, or 4.8%. Nothing about the building changed — only the assumption did. These figures are illustrative and are not drawn from any specific property." },
+      { type: "h2", text: "What to ask before you buy" },
+      { type: "ol", items: [
+        "What are the total annual outgoings for this property?",
+        "Which of them are recoverable under the current lease?",
+        "How have they moved over the last three years?",
+        "Is there a sinking fund, and is it adequate for the building's age?",
+        "Are any special levies raised or foreshadowed?",
+        "What is the land tax position given my likely holding structure?",
+      ] },
+      DISCLAIMER_BLOCK,
+    ],
+  },
+  {
+    slug: "understanding-commercial-property-yields",
+    title: "Understanding Commercial Property Yields",
+    metaTitle: "Understanding Commercial Property Yields | Investor Guide",
+    metaDescription:
+      "How commercial yields are calculated, the difference between gross and net yield, why a high yield often signals higher risk, and what a yield figure doesn't tell you.",
+    excerpt:
+      "How yields are calculated, why gross and net are not comparable, and why a higher yield often signals higher risk rather than a better investment.",
+    category: "Income & Returns",
+    readMinutes: 6,
+    published: "2026-04-08",
+    art: "industrial",
+    blocks: [
+      { type: "p", text: "Yield is the headline number in commercial property. It's also the most frequently misused, because it's a simple calculation that carries a lot of unstated assumptions." },
+      { type: "h2", text: "The calculation" },
+      { type: "p", text: "Yield is annual income divided by price, expressed as a percentage. Gross yield uses gross rent; net yield uses income after outgoings. The two are not comparable and are routinely quoted interchangeably." },
+      { type: "p", text: "As an illustration only: a property at $600,000 with gross rent of $42,000 shows a 7% gross yield. If $9,000 of outgoings aren't recoverable, the net yield is 5.5%. Same property, very different number. These figures are illustrative and are not drawn from any specific property." },
+      { type: "h2", text: "What a yield figure doesn't tell you" },
+      { type: "ul", items: [
+        "Whether the income will continue past the current lease",
+        "How financially sound the tenant is",
+        "What happens at the next rent review",
+        "How long the property would take to re-let",
+        "What capital expenditure is coming",
+        "Whether the current rent is at, above or below market",
+      ] },
+      { type: "h2", text: "Why a high yield often means higher risk" },
+      { type: "p", text: "Yields aren't random. Where a property offers a materially higher yield than comparable stock, there's usually a reason: a short lease, a weaker tenant, a specialised building, a thinner market or looming capital works." },
+      { type: "p", text: "That doesn't make it a bad buy. It means the yield is compensating you for something, and your job is to identify what — then decide whether the compensation is adequate." },
+      { type: "h2", text: "Comparing properties properly" },
+      { type: "ol", items: [
+        "Establish whether each figure is gross or net, and convert to a consistent basis",
+        "Subtract every outgoing you'll actually bear",
+        "Adjust for the remaining lease term and the strength of the tenant",
+        "Account for likely vacancy and re-letting costs over your holding period",
+        "Factor in capital expenditure you can foresee",
+        "Then compare",
+      ] },
+      { type: "callout", title: "Yield is a snapshot", text: "A yield describes today's income at today's price under today's lease. It is not a forecast, and it is not a promise. Treat it as one input among several." },
+      DISCLAIMER_BLOCK,
+    ],
+  },
+  {
+    slug: "how-much-money-do-you-need-to-invest-in-commercial-property",
+    title: "How Much Money Do You Need to Invest in Commercial Property?",
+    metaTitle: "How Much Money Do You Need for Commercial Property? | Investor Guide",
+    metaDescription:
+      "Deposit requirements, transaction costs, GST, buffers and lending differences. What it actually takes to invest in commercial property in Australia.",
+    excerpt:
+      "Deposit requirements, transaction costs, GST and the buffer you should hold — the full picture of what commercial property actually costs to enter.",
+    category: "Getting Started",
+    readMinutes: 7,
+    published: "2026-04-20",
+    art: "commercial",
+    blocks: [
+      { type: "p", text: "It's the first question almost every investor asks, and the honest answer is: more than the deposit, and it depends on the asset. Here's how to build a realistic figure." },
+      { type: "h2", text: "The deposit" },
+      { type: "p", text: "Commercial lenders generally require a larger deposit than residential lenders. The exact requirement depends on the lender, the asset type, the lease and your own position — specialised assets often attract more conservative terms than standard industrial or retail stock." },
+      { type: "p", text: "Some investors access equity in existing property to fund the deposit. Whether that's appropriate depends on your circumstances and warrants advice." },
+      { type: "h2", text: "Transaction costs" },
+      { type: "ul", items: [
+        "Stamp duty — calculated on the purchase price, and a significant line item",
+        "Legal fees for contract review and settlement",
+        "Building and pest inspections appropriate to the asset",
+        "Due diligence costs: searches, owners corporation records, planning enquiries",
+        "Loan establishment fees and lender's valuation",
+        "Accounting advice on structure and GST",
+      ] },
+      { type: "h2", text: "GST" },
+      { type: "p", text: "GST commonly applies to commercial property transactions. Where a property is sold with a tenant in place, the going-concern provisions may apply. The treatment affects your cash requirement at settlement and your ongoing obligations." },
+      { type: "p", text: "This is genuinely an area to get advice on before you sign, not after. Getting it wrong is expensive." },
+      { type: "h2", text: "The buffer nobody budgets for" },
+      { type: "p", text: "The costs above get you to settlement. The buffer gets you through the first vacancy." },
+      { type: "ul", items: [
+        "Outgoings during any period without a tenant",
+        "Loan repayments during that period",
+        "Re-letting costs — agent fees, incentives, marketing",
+        "Make-good shortfalls where the outgoing tenant doesn't fully reinstate",
+        "Capital expenditure that emerges after purchase",
+      ] },
+      { type: "h2", text: "Working out your real capacity" },
+      { type: "p", text: "The practical sequence is: speak to a commercial broker or lender first, establish what you can actually borrow and on what terms, then work backwards to a purchase price. Looking at properties before you know your capacity wastes time and leads to disappointment." },
+      { type: "callout", title: "A useful test", text: "Take your intended purchase, assume no tenant for six months, and check whether you can comfortably meet the outgoings and loan repayments. If not, the number is too high." },
+      DISCLAIMER_BLOCK,
+    ],
+  },
+  {
+    slug: "warehouse-investment-what-should-investors-consider",
+    title: "Warehouse Investment: What Should Investors Consider?",
+    metaTitle: "Warehouse Investment: What Should Investors Consider? | Guide",
+    metaDescription:
+      "Specification, location, tenant demand, lease structure and capital expenditure — the considerations that determine whether a warehouse investment performs.",
+    excerpt:
+      "Specification, location, tenant demand, lease structure and capital expenditure — what actually determines whether a warehouse investment performs.",
+    category: "Asset Types",
+    readMinutes: 7,
+    published: "2026-05-04",
+    art: "warehouse",
+    blocks: [
+      { type: "p", text: "Warehouses appeal to investors because they're comprehensible. A shed is a shed. But the factors that determine whether a particular warehouse performs are more specific than the general appeal suggests." },
+      { type: "h2", text: "Location within the industrial market" },
+      { type: "p", text: "Industrial demand follows infrastructure and business clustering. Proximity to freight routes, freeways and ports matters. So does the depth of the existing business base — a precinct with hundreds of small operators has a deeper tenant pool than an isolated site." },
+      { type: "p", text: "Also consider competing supply. New estates coming online nearby can affect both rents and vacancy periods for existing stock." },
+      { type: "h2", text: "Specification relative to the local market" },
+      { type: "p", text: "The right specification isn't universal — it's whatever tenants in that precinct need. A high-clearance unit is an asset where tenants want racking and irrelevant where they don't." },
+      { type: "ul", items: [
+        "Clearance height and its match to local tenant requirements",
+        "Access — roller door size, truck manoeuvring, hardstand",
+        "Power supply, particularly three-phase capacity",
+        "Office-to-warehouse ratio",
+        "Parking and staff amenities",
+        "Condition of roof, floor and roller doors",
+      ] },
+      { type: "h2", text: "The lease, if there is one" },
+      { type: "p", text: "For a tenanted warehouse, the lease is the investment. Term remaining, review mechanism, outgoings recovery, repair obligations, make-good and security held all shape both income and risk." },
+      { type: "p", text: "Consider the position at expiry as carefully as the position today. What's the likely market rent then? How long to re-let? What incentives would you need to offer?" },
+      { type: "h2", text: "Capital expenditure" },
+      { type: "p", text: "Industrial buildings have a small number of expensive components. Roofs, concrete floors and roller doors are the usual suspects. Compliance items — fire services, essential safety measures — recur on a schedule." },
+      { type: "p", text: "Get a condition assessment and form a view on what's likely over your holding period. A cheap purchase with a failing roof isn't cheap." },
+      { type: "h2", text: "Concentration risk" },
+      { type: "p", text: "A single-tenant property means all your income comes from one business. If that business fails, income goes to zero rather than falling proportionally. Investors holding a single commercial asset should size that risk honestly." },
+      DISCLAIMER_BLOCK,
+    ],
+  },
+  {
+    slug: "storage-property-investment-explained",
+    title: "Storage Property Investment Explained",
+    metaTitle: "Storage Property Investment Explained | Investor Guide",
+    metaDescription:
+      "How storage property investment works: what you're buying, owners corporation considerations, income structure, resale and the risks specific to the segment.",
+    excerpt:
+      "What you're actually buying, why the owners corporation matters more than the unit, and the risks specific to the smallest end of the commercial market.",
+    category: "Asset Types",
+    readMinutes: 6,
+    published: "2026-05-18",
+    art: "storage",
+    blocks: [
+      { type: "p", text: "Storage units are frequently the cheapest way into commercial property, which makes them attractive to first-time commercial investors. The low entry price is real. So are the considerations that come with it." },
+      { type: "h2", text: "What you're buying" },
+      { type: "p", text: "Typically a strata-titled unit inside a larger purpose-built complex. You own your unit and share the common property — driveways, security, lighting, roofing — with other owners through an owners corporation." },
+      { type: "p", text: "This structure is the most important thing to understand. You're buying a small share of a larger operation, and how that operation is run affects your outcome as much as your individual unit does." },
+      { type: "h2", text: "Why the owners corporation matters most" },
+      { type: "ul", items: [
+        "Levies are a fixed cost that consumes a larger proportion of gross rent on a low-priced asset",
+        "The sinking fund determines whether future capital works arrive as a planned expense or a special levy",
+        "Complex-wide occupancy affects the perceived quality of the asset and its resale",
+        "Management quality drives security, access and maintenance — all of which affect tenant demand",
+        "The owner-occupier versus investor mix influences how the complex is run",
+      ] },
+      { type: "h2", text: "Income" },
+      { type: "p", text: "Storage units can produce rental income, though the absolute amounts are small. Tenants may be individuals storing possessions or businesses storing stock and equipment. Demand depends heavily on location, access and what alternatives exist nearby." },
+      { type: "p", text: "Calculate the net position carefully. Levies, management costs and any vacancy have a proportionally larger effect on a low-priced asset than on a larger one." },
+      { type: "h2", text: "Resale" },
+      { type: "p", text: "The buyer pool for a storage unit is narrower than for general commercial property. Review comparable resale evidence in the same complex and similar complexes before you buy — not just what units are being marketed at, but what they have actually sold for." },
+      { type: "h2", text: "Finance" },
+      { type: "p", text: "Some lenders are more conservative on small specialised assets, which can mean larger deposits or shorter terms. Check with a commercial broker before assuming standard commercial terms will apply." },
+      { type: "h2", text: "Where storage can suit" },
+      { type: "p", text: "Storage can suit an investor who wants commercial exposure at a low capital commitment and who has done the work on the specific complex. It suits less well an investor who assumes the low price means low risk. Those are different things." },
+      DISCLAIMER_BLOCK,
+    ],
+  },
+  {
+    slug: "questions-to-ask-before-buying-commercial-property",
+    title: "Questions to Ask Before Buying Commercial Property",
+    metaTitle: "Questions to Ask Before Buying Commercial Property | Checklist",
+    metaDescription:
+      "The questions worth asking about the lease, the tenant, the building, the outgoings and the market before committing to a commercial property purchase.",
+    excerpt:
+      "The questions worth asking about the lease, the tenant, the building, the outgoings and the market — before you commit rather than after.",
+    category: "Due Diligence",
+    readMinutes: 6,
+    published: "2026-06-02",
+    art: "commercial",
+    blocks: [
+      { type: "p", text: "Good questions early save expensive discoveries later. These are the ones that most often change an investor's view of a property." },
+      { type: "h2", text: "About the income" },
+      { type: "ul", items: [
+        "Is the quoted rent gross or net?",
+        "What are the total annual outgoings, and which are recoverable?",
+        "How is rent reviewed, and when is the next review?",
+        "Is the current rent at, above or below market?",
+        "What is the arrears history?",
+      ] },
+      { type: "h2", text: "About the lease" },
+      { type: "ul", items: [
+        "How long is left on the term, and are there options? Who holds them?",
+        "What security is held, and by whom is it given?",
+        "Who is responsible for structural repairs and capital items?",
+        "What are the make-good obligations at expiry?",
+        "What is the permitted use, and does it limit the future tenant pool?",
+        "Is this lease subject to retail leasing legislation?",
+        "Are there assignment or subletting rights?",
+      ] },
+      { type: "h2", text: "About the tenant" },
+      { type: "ul", items: [
+        "Who is the tenant, and how long have they occupied?",
+        "What do they do, and how exposed is that business?",
+        "Is the lease to a company, and is there a personal guarantee?",
+        "Have they invested in fit-out that makes them likely to stay?",
+      ] },
+      { type: "h2", text: "About the building" },
+      { type: "ul", items: [
+        "What condition are the major components in — roof, floor, doors, services?",
+        "What capital expenditure is likely in the next five years?",
+        "Are all compliance items current — fire services, essential safety measures?",
+        "Is there any environmental history on the site?",
+        "What is the zoning, and what does it permit?",
+      ] },
+      { type: "h2", text: "About the strata position" },
+      { type: "ul", items: [
+        "What are the current levies, and how have they moved?",
+        "What is the sinking fund balance, and is it adequate?",
+        "Are any special levies raised or foreshadowed?",
+        "What do the recent minutes reveal?",
+        "Is the insurance current and adequate?",
+      ] },
+      { type: "h2", text: "About the market" },
+      { type: "ul", items: [
+        "How long do comparable properties take to lease here?",
+        "What incentives are being offered on comparable leases?",
+        "What competing supply is coming?",
+        "What have comparable properties actually sold for?",
+      ] },
+      { type: "callout", title: "The question behind the questions", text: "What happens if the tenant leaves tomorrow? If you can answer that comfortably, you understand the investment. If you can't, keep asking." },
+      DISCLAIMER_BLOCK,
+    ],
+  },
+  {
+    slug: "commercial-property-due-diligence-checklist",
+    title: "Commercial Property Due Diligence Checklist",
+    metaTitle: "Commercial Property Due Diligence Checklist | Investor Guide",
+    metaDescription:
+      "A structured due diligence checklist for commercial property: title, lease, building, planning, strata, financial and environmental review before settlement.",
+    excerpt:
+      "A structured checklist covering title, lease, building, planning, strata, financial and environmental review — the work that happens between offer and settlement.",
+    category: "Due Diligence",
+    readMinutes: 8,
+    published: "2026-06-16",
+    art: "industrial",
+    blocks: [
+      { type: "p", text: "Due diligence is the work between an accepted offer and an irrevocable commitment. In commercial property it's broader than residential, and skipping items is how investors inherit problems." },
+      { type: "p", text: "Use this as a starting framework and adapt it to the asset. Engage the appropriate professionals — this is not a solo exercise." },
+      { type: "h2", text: "1. Title and legal" },
+      { type: "ul", items: [
+        "Title search and plan of subdivision",
+        "Easements, covenants and registered interests",
+        "Section 32 / vendor statement review by a solicitor",
+        "Contract of sale review, including special conditions",
+        "Confirmation of what is included in the sale",
+      ] },
+      { type: "h2", text: "2. Lease and tenancy" },
+      { type: "ul", items: [
+        "Full lease document and any variations or side agreements",
+        "Rent roll and arrears history",
+        "Confirmation of security held — bank guarantee, bond, guarantees",
+        "Outgoings reconciliation for recent years",
+        "Any disputes, breaches or outstanding notices",
+        "Tenant estoppel or confirmation of lease terms where available",
+      ] },
+      { type: "h2", text: "3. Building and condition" },
+      { type: "ul", items: [
+        "Building inspection appropriate to the asset type",
+        "Pest inspection where relevant",
+        "Roof, floor slab, roller doors and services condition",
+        "Essential safety measures and fire services compliance records",
+        "Any outstanding building or compliance orders",
+        "Estimate of capital expenditure over your holding period",
+      ] },
+      { type: "h2", text: "4. Planning and permitted use" },
+      { type: "ul", items: [
+        "Zoning confirmation with the local council",
+        "Permitted uses and any existing use rights",
+        "Current permits and any conditions attached",
+        "Proposed planning changes affecting the area",
+      ] },
+      { type: "h2", text: "5. Strata / owners corporation" },
+      { type: "ul", items: [
+        "Owners corporation certificate",
+        "Budget, levy schedule and sinking fund balance",
+        "Minutes of recent meetings",
+        "Insurance certificate and sum insured",
+        "Special levies raised or foreshadowed",
+        "Any disputes or litigation involving the owners corporation",
+      ] },
+      { type: "h2", text: "6. Financial" },
+      { type: "ul", items: [
+        "Verified income and outgoings figures, not marketing figures",
+        "GST treatment and whether going-concern applies",
+        "Land tax position given your intended holding structure",
+        "Finance approval on the specific property, not just in principle",
+        "Modelled cash flow including a vacancy scenario",
+      ] },
+      { type: "h2", text: "7. Environmental" },
+      { type: "ul", items: [
+        "Site history, particularly on industrial land",
+        "Any known contamination or remediation obligations",
+        "Environmental audit where the history warrants it",
+      ] },
+      { type: "h2", text: "8. Market" },
+      { type: "ul", items: [
+        "Comparable sales evidence",
+        "Comparable lease evidence, including incentives",
+        "Vacancy rates and average letting-up periods in the precinct",
+        "Competing supply under construction or approved",
+      ] },
+      { type: "callout", title: "Get it in writing", text: "Verbal assurances during a sale process are worth very little later. If something matters to your decision, get it documented or make it a condition." },
+      DISCLAIMER_BLOCK,
+    ],
+  },
+  {
+    slug: "understanding-commercial-property-leases",
+    title: "Understanding Commercial Property Leases",
+    metaTitle: "Understanding Commercial Property Leases | Investor Guide",
+    metaDescription:
+      "The clauses that matter in a commercial lease: term, options, rent reviews, outgoings, repairs, make-good, permitted use, security and assignment.",
+    excerpt:
+      "Term, options, rent reviews, outgoings, repairs, make-good, permitted use and security — the clauses that decide what your investment actually earns.",
+    category: "Due Diligence",
+    readMinutes: 8,
+    published: "2026-07-01",
+    art: "commercial",
+    blocks: [
+      { type: "p", text: "In commercial property, the lease is the investment. It determines your income, your costs, your risk and a large part of your property's value. Learning to read one is the highest-return skill in the sector." },
+      { type: "h2", text: "Term and options" },
+      { type: "p", text: "The term is how long the tenant is committed. Options to renew are typically held by the tenant, not the landlord — meaning the tenant can choose to extend but you cannot compel them to." },
+      { type: "p", text: "Check the notice periods for exercising an option and what happens if the tenant misses them. Also check whether options carry pre-agreed rent or a market review." },
+      { type: "h2", text: "Rent and rent reviews" },
+      { type: "ul", items: [
+        "The starting rent, and whether it's gross or net",
+        "The review mechanism: fixed, CPI, market, or a combination",
+        "Review frequency and the dates",
+        "Whether a ratchet clause applies at market reviews",
+        "How rent is apportioned and when it's payable",
+      ] },
+      { type: "h2", text: "Outgoings" },
+      { type: "p", text: "The lease specifies which outgoings the tenant reimburses, how they're calculated and when they're reconciled. Look for the definition of outgoings, any exclusions, and the process for estimates and adjustments." },
+      { type: "p", text: "Where retail leasing legislation applies, statutory restrictions may override what the lease says. Confirm which regime applies." },
+      { type: "h2", text: "Repairs and maintenance" },
+      { type: "p", text: "Typically the tenant maintains the premises in the condition they took them, and the landlord retains structural and capital obligations. The dividing line is where disputes arise — read the definitions carefully." },
+      { type: "h2", text: "Make-good" },
+      { type: "p", text: "Make-good is the tenant's obligation to reinstate the premises at the end of the lease. It ranges from 'remove your fit-out' to 'return to base building condition'. A weak make-good clause can leave you funding the reinstatement before you can re-let." },
+      { type: "h2", text: "Permitted use" },
+      { type: "p", text: "The permitted use limits what the tenant may do. A narrow permitted use protects you from unwanted activities but can also limit who you can lease to later if it carries over into future leases or planning approvals." },
+      { type: "h2", text: "Security" },
+      { type: "ul", items: [
+        "Bank guarantee — generally the strongest form, check the amount and expiry",
+        "Security deposit or bond",
+        "Personal guarantees from company directors",
+        "Whether the security is sufficient to cover a realistic default scenario",
+      ] },
+      { type: "h2", text: "Assignment and subletting" },
+      { type: "p", text: "These clauses govern whether the tenant can transfer the lease. Assignment can be positive — a business sale that keeps the premises occupied — but you want approval rights and, ideally, continuing liability or fresh security." },
+      { type: "h2", text: "Default and termination" },
+      { type: "p", text: "Understand what constitutes default, what notice is required, and what remedies you have. These clauses matter only when things go wrong, which is exactly when you don't want to discover they're weak." },
+      { type: "callout", title: "Have it reviewed", text: "A commercial property solicitor reviewing a lease before purchase costs a fraction of what a poorly understood clause can cost over a five-year term. This is not the place to save money." },
+      DISCLAIMER_BLOCK,
+    ],
+  },
+];
+
+export function getArticle(slug: string): Article | undefined {
+  return ARTICLES.find((a) => a.slug === slug);
+}
+
+export const ARTICLE_SLUGS = ARTICLES.map((a) => a.slug);
+
+export const ARTICLE_CATEGORIES = Array.from(new Set(ARTICLES.map((a) => a.category)));

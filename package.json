@@ -1,0 +1,38 @@
+{
+  "name": "commercial-property-investor-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Investor acquisition engine for commercial property opportunities. Public marketing is generic; private supply is protected.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs scripts/migrate.ts",
+    "db:seed": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs scripts/seed.ts",
+    "admin:create": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs scripts/create-admin.ts",
+    "stocklist:import": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs scripts/import-stocklist.ts",
+    "test": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs --test-reporter=spec --test tests/*.test.ts",
+    "audit:privacy": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs scripts/privacy-audit.ts",
+    "email:dispatch": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs scripts/dispatch-emails.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "next": "^15.5.23",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "server-only": "^0.0.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "autoprefixer": "^10.5.4",
+    "postcss": "^8.5.26",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3"
+  }
+}

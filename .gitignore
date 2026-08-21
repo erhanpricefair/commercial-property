@@ -1,0 +1,22 @@
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Local environment + secrets
+.env
+.env.local
+.env*.local
+
+# Private data — the opportunity database must never be committed
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+data/stocklist*.csv
+data/import/
+
+.DS_Store
+npm-debug.log*
