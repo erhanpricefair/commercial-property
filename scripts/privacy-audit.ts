@@ -55,12 +55,7 @@ function walk(dir: string): string[] {
   return fs.readdirSync(full).flatMap((entry) => walk(path.join(dir, entry)));
 }
 
-const publicRoutes = [
-  "app/page.tsx", "app/layout.tsx", "app/sitemap.ts", "app/robots.ts",
-  "app/[slug]", "app/resources", "app/register", "app/guide", "app/opportunities",
-  "app/how-it-works", "app/why-commercial-property", "app/contact",
-  "app/privacy", "app/terms", "app/disclaimer",
-]
+const publicRoutes = ["app/(site)", "app/sitemap.ts", "app/robots.ts"]
   .flatMap(walk)
   .filter((f) => /\.(ts|tsx)$/.test(f));
 

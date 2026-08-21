@@ -17,7 +17,7 @@ export default function GuidePage() {
         <Breadcrumbs items={[{ href: "/", label: "Home" }, { label: "Investor Starter Guide" }]} />
 
         <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
-          <div>
+          <div className="order-2 lg:order-1">
             <p className="eyebrow">Free Resource</p>
             <h1 className="mt-4 font-display text-display-lg text-ink-900">{GUIDE_TITLE}</h1>
             <p className="mt-5 text-[1.0625rem] leading-[1.7] text-ink-600">
@@ -55,7 +55,7 @@ export default function GuidePage() {
             <Disclaimer className="mt-8" />
           </div>
 
-          <div className="lg:sticky lg:top-28 lg:self-start">
+          <div className="order-1 lg:order-2 lg:sticky lg:top-28 lg:self-start">
             <div className="card">
               <h2 className="font-display text-display-sm text-ink-900">
                 Get the guide

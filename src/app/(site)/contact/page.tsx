@@ -18,7 +18,7 @@ export default function ContactPage() {
         <Breadcrumbs items={[{ href: "/", label: "Home" }, { label: "Contact" }]} />
 
         <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
-          <div>
+          <div className="order-2 lg:order-1">
             <p className="eyebrow">Contact</p>
             <h1 className="mt-4 font-display text-display-lg text-ink-900">
               Talk to us about commercial property
@@ -75,7 +75,7 @@ export default function ContactPage() {
             <Disclaimer className="mt-8" />
           </div>
 
-          <div className="lg:sticky lg:top-28 lg:self-start">
+          <div className="order-1 lg:order-2 lg:sticky lg:top-28 lg:self-start">
             <ContactForm />
           </div>
         </div>

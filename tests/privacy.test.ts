@@ -14,21 +14,9 @@ const SRC = path.join(process.cwd(), "src");
 
 /** Every route that an anonymous visitor can reach. */
 const PUBLIC_ROUTE_DIRS = [
-  "app/page.tsx",
-  "app/layout.tsx",
+  "app/(site)",
   "app/sitemap.ts",
   "app/robots.ts",
-  "app/[slug]",
-  "app/resources",
-  "app/register",
-  "app/guide",
-  "app/opportunities",
-  "app/how-it-works",
-  "app/why-commercial-property",
-  "app/contact",
-  "app/privacy",
-  "app/terms",
-  "app/disclaimer",
 ];
 
 /** Modules that read the private opportunity tables. */
@@ -122,7 +110,7 @@ describe("public surface cannot reach private data", () => {
   });
 
   test("every admin page guards itself independently of the middleware", () => {
-    const adminPages = walk("app/admin").filter((f) => f.endsWith("page.tsx"));
+    const adminPages = walk("app/(admin)").filter((f) => f.endsWith("page.tsx"));
     assert.ok(adminPages.length >= 6, `expected several admin pages, found ${adminPages.length}`);
 
     const unguarded: string[] = [];
@@ -138,7 +126,7 @@ describe("public surface cannot reach private data", () => {
   });
 
   test("every admin server action requires an authenticated admin", () => {
-    const actionFiles = walk("app/admin").filter((f) => f.endsWith("actions.ts"));
+    const actionFiles = walk("app/(admin)").filter((f) => f.endsWith("actions.ts"));
     assert.ok(actionFiles.length >= 2);
 
     for (const file of actionFiles) {
@@ -176,10 +164,28 @@ describe("public surface cannot reach private data", () => {
   });
 
   test("the presentation route declares noindex", () => {
-    const page = fs.readFileSync(path.join(SRC, "app/opportunity/[token]/page.tsx"), "utf8");
+    const page = fs.readFileSync(path.join(SRC, "app/(presentation)/opportunity/[token]/page.tsx"), "utf8");
     assert.ok(page.includes("index: false"), "presentation metadata must set index: false");
-    const layout = fs.readFileSync(path.join(SRC, "app/opportunity/layout.tsx"), "utf8");
+    const layout = fs.readFileSync(path.join(SRC, "app/(presentation)/layout.tsx"), "utf8");
     assert.ok(layout.includes("noindex"), "presentation layout must emit a noindex meta tag");
+  });
+
+  test("private surfaces have their own root layout, not the public shell", () => {
+    // A nested layout would put the marketing header and — critically — the
+    // GA/Meta tags on admin and presentation pages, reporting private URLs to
+    // third parties. Each must declare its own <html>/<body>.
+    for (const layout of ["app/(admin)/layout.tsx", "app/(presentation)/layout.tsx"]) {
+      const source = fs.readFileSync(path.join(SRC, layout), "utf8");
+      assert.ok(source.includes("<html"), `${layout} must be a root layout`);
+      assert.ok(source.includes("<body"), `${layout} must render its own body`);
+      assert.ok(!source.includes("Analytics"), `${layout} must not load analytics`);
+      assert.ok(!source.includes("Header"), `${layout} must not render the public header`);
+    }
+    // ...and the public shell must not be an ancestor of them.
+    assert.ok(
+      !fs.existsSync(path.join(SRC, "app/layout.tsx")),
+      "a top-level app/layout.tsx would wrap every route group in the public shell",
+    );
   });
 
   test("no schema.org markup describes a property, offer or price", () => {

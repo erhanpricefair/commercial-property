@@ -69,11 +69,14 @@ export default function HomePage() {
     <>
       {/* ---------------- 1. HERO ---------------- */}
       <section className="relative overflow-hidden border-b border-ink-100 bg-canvas">
-        <BlueprintPattern className="pointer-events-none absolute inset-0 h-full w-full text-ink-100/70" />
+        <BlueprintPattern className="pointer-events-none absolute inset-0 h-full w-full text-ink-100/30 sm:text-ink-100/70" />
         <div className="container-page relative py-16 sm:py-24 lg:py-28">
           <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
             <div className="animate-fade-up">
-              <p className="eyebrow">Private Investor Access · {`Melbourne & Victoria`}</p>
+              <p className="eyebrow">
+                Private Investor Access
+                <span className="hidden sm:inline"> · Melbourne &amp; Victoria</span>
+              </p>
               <h1 className="mt-4 font-display text-display-xl text-ink-900">
                 Looking for Your Next Commercial Property Investment?
               </h1>

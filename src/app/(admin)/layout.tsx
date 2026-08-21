@@ -4,9 +4,15 @@ import AdminShell from "@/components/admin/AdminShell";
 import { getCurrentAdmin, purgeExpiredSessions } from "@/lib/auth";
 
 /**
- * Admin routes get their own root layout — no public header, no footer, no
- * analytics tags, and metadata that forbids indexing regardless of what any
- * child page declares.
+ * Admin is its own ROOT layout, in a route group of its own.
+ *
+ * That is the point: a nested layout would still sit inside the public shell,
+ * which would put the marketing header, the footer and — worse — the GA and
+ * Meta Pixel tags on every admin screen, reporting URLs like
+ * `/admin/investors/42` to third parties. A separate root layout means the
+ * public chrome and the analytics scripts simply do not exist here.
+ *
+ * Route groups don't affect URLs, so these pages are still served at /admin/*.
  */
 export const metadata: Metadata = {
   title: { default: "Admin", template: "%s | Admin" },
