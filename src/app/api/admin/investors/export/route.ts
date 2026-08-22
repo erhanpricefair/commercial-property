@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
     search: params.get("q") ?? undefined,
     from: params.get("from") ?? undefined,
     to: params.get("to") ?? undefined,
+    campaign: params.get("campaign") ?? undefined,
+    utmSource: params.get("utmSource") ?? undefined,
     needsFollowUp: params.get("followUp") === "1",
     limit: 200,
   });
@@ -42,6 +44,8 @@ export async function GET(request: NextRequest) {
     "id", "first_name", "last_name", "email", "mobile", "preferred_contact",
     "property_type", "budget", "location", "suburb", "finance_status", "timeframe",
     "lead_score", "classification", "status", "match_count", "source",
+    "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term",
+    "click_id", "referrer",
     "registered", "last_contact", "next_followup",
   ];
 
@@ -66,6 +70,13 @@ export async function GET(request: NextRequest) {
         row.status,
         row.match_count,
         row.source ?? "",
+        row.utm_source ?? "",
+        row.utm_medium ?? "",
+        row.utm_campaign ?? "",
+        row.utm_content ?? "",
+        row.utm_term ?? "",
+        row.click_id ?? "",
+        row.referrer ?? "",
         row.created_at,
         row.last_contact_at ?? "",
         row.next_followup_at ?? "",

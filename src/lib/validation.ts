@@ -21,6 +21,22 @@ const auMobile = z
 
 const name = z.string().trim().min(1, "Required").max(80, "Too long");
 
+
+/**
+ * Campaign attribution, captured client-side from the landing URL.
+ * Every field is optional and permissive — a missing or malformed UTM must
+ * never cost us the lead.
+ */
+const attributionFields = {
+  utmSource: z.string().trim().max(120).optional().or(z.literal("")),
+  utmMedium: z.string().trim().max(120).optional().or(z.literal("")),
+  utmCampaign: z.string().trim().max(120).optional().or(z.literal("")),
+  utmContent: z.string().trim().max(120).optional().or(z.literal("")),
+  utmTerm: z.string().trim().max(120).optional().or(z.literal("")),
+  clickId: z.string().trim().max(255).optional().or(z.literal("")),
+  referrer: z.string().trim().max(200).optional().or(z.literal("")),
+};
+
 export const leadSchema = z.object({
   propertyType: z.enum(PROPERTY_TYPES),
   budget: z.enum(BUDGETS),
@@ -39,6 +55,7 @@ export const leadSchema = z.object({
   source: z.string().trim().max(80).optional(),
   sourceDetail: z.string().trim().max(200).optional(),
   landingPage: z.string().trim().max(300).optional(),
+  ...attributionFields,
   /** Honeypot — must stay empty. Bots fill it in. */
   company: z.string().max(0).optional().or(z.literal("")),
 });
@@ -50,7 +67,9 @@ export const guideSchema = z.object({
   email: z.string().trim().toLowerCase().email("Please enter a valid email address").max(160),
   company: z.string().max(0).optional().or(z.literal("")),
   source: z.string().trim().max(80).optional(),
+  sourceDetail: z.string().trim().max(200).optional(),
   landingPage: z.string().trim().max(300).optional(),
+  ...attributionFields,
 });
 
 export const contactSchema = z.object({

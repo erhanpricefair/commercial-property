@@ -75,6 +75,16 @@ export function migrate(db: Database.Database): void {
       source          TEXT,
       source_detail   TEXT,
       landing_page    TEXT,
+      /* Paid-campaign attribution. Populated from the URL on first touch and
+         carried through the multi-step form, so the owner can tell which ad
+         set and creative produced which lead. */
+      utm_source      TEXT,
+      utm_medium      TEXT,
+      utm_campaign    TEXT,
+      utm_content     TEXT,
+      utm_term        TEXT,
+      click_id        TEXT,
+      referrer        TEXT,
       consent_marketing INTEGER NOT NULL DEFAULT 0,
       created_at      TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at      TEXT NOT NULL DEFAULT (datetime('now')),
@@ -250,6 +260,42 @@ export function migrate(db: Database.Database): void {
     );
     CREATE INDEX IF NOT EXISTS idx_integration_status ON integration_events(status);
   `);
+
+  // Columns added after a database was first created must exist before any
+  // index over them is declared — on an existing install the CREATE TABLE
+  // block above is a no-op, so the column would not be there yet.
+  addMissingColumns(db);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_investors_utm_campaign ON investors(utm_campaign);
+    CREATE INDEX IF NOT EXISTS idx_investors_utm_source ON investors(utm_source);
+  `);
+}
+
+/**
+ * Add columns that were introduced after a database was first created.
+ *
+ * `CREATE TABLE IF NOT EXISTS` is a no-op on an existing table, so new columns
+ * need an explicit ALTER. SQLite has no `ADD COLUMN IF NOT EXISTS`, hence the
+ * pragma check. Keep entries here forever — they are cheap and they are what
+ * lets an existing deployment upgrade without losing its lead history.
+ */
+function addMissingColumns(db: Database.Database): void {
+  const additions: { table: string; column: string; definition: string }[] = [
+    { table: "investors", column: "utm_source", definition: "TEXT" },
+    { table: "investors", column: "utm_medium", definition: "TEXT" },
+    { table: "investors", column: "utm_campaign", definition: "TEXT" },
+    { table: "investors", column: "utm_content", definition: "TEXT" },
+    { table: "investors", column: "utm_term", definition: "TEXT" },
+    { table: "investors", column: "click_id", definition: "TEXT" },
+    { table: "investors", column: "referrer", definition: "TEXT" },
+  ];
+
+  for (const { table, column, definition } of additions) {
+    const columns = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+    if (columns.some((c) => c.name === column)) continue;
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
 }
 
 /** Test/CLI helper: build an in-memory database with the full schema. */

@@ -6,6 +6,7 @@ import {
   hotLeads,
   investorsWithMatches,
   followUpQueue,
+  campaignPerformance,
   type DashboardInvestor,
 } from "@/lib/repositories/dashboard";
 import { ensureEmailTemplates } from "@/lib/email";
@@ -32,6 +33,7 @@ export default async function AdminDashboard() {
     investorsWithMatches(8),
     followUpQueue(8),
   ];
+  const campaigns = campaignPerformance(12);
 
   const pipelineTotal = stats.pipeline.reduce((sum, stage) => sum + stage.count, 0) || 1;
 
@@ -132,6 +134,65 @@ export default async function AdminDashboard() {
           showFollowUp
         />
       </div>
+
+      {/* Where the leads are coming from — the number that decides ad spend. */}
+      {campaigns.length > 0 && (
+        <section className="mt-6 rounded-xl border border-ink-100 bg-canvas-raised">
+          <header className="flex items-center justify-between border-b border-ink-100 px-5 py-3.5">
+            <h2 className="text-sm font-semibold text-ink-900">Campaign performance</h2>
+            <span className="text-xs text-ink-400">Paid and referral traffic</span>
+          </header>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[40rem] text-left text-sm">
+              <thead className="bg-canvas-sunken text-xs font-semibold uppercase tracking-wider text-ink-500">
+                <tr>
+                  <th scope="col" className="px-5 py-2.5">Campaign</th>
+                  <th scope="col" className="px-5 py-2.5">Source</th>
+                  <th scope="col" className="px-5 py-2.5">Creative</th>
+                  <th scope="col" className="px-5 py-2.5 text-right">Leads</th>
+                  <th scope="col" className="px-5 py-2.5 text-right">Hot</th>
+                  <th scope="col" className="px-5 py-2.5 text-right">Hot rate</th>
+                  <th scope="col" className="px-5 py-2.5 text-right">Converted</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-ink-50">
+                {campaigns.map((row, i) => (
+                  <tr key={`${row.utm_campaign}-${row.utm_content}-${i}`} className="hover:bg-canvas-sunken">
+                    <td className="px-5 py-2.5">
+                      {row.utm_campaign ? (
+                        <Link
+                          href={`/admin/investors?campaign=${encodeURIComponent(row.utm_campaign)}`}
+                          className="font-medium text-ink-900 hover:underline"
+                        >
+                          {row.utm_campaign}
+                        </Link>
+                      ) : (
+                        <span className="text-ink-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-2.5 text-xs text-ink-600">{row.utm_source ?? "—"}</td>
+                    <td className="px-5 py-2.5 text-xs text-ink-600">{row.utm_content ?? "—"}</td>
+                    <td className="px-5 py-2.5 text-right tabular-nums text-ink-800">{row.leads}</td>
+                    <td className="px-5 py-2.5 text-right tabular-nums font-semibold text-signal-hot">
+                      {row.hot}
+                    </td>
+                    <td className="px-5 py-2.5 text-right tabular-nums text-ink-600">
+                      {row.leads ? `${Math.round((row.hot / row.leads) * 100)}%` : "—"}
+                    </td>
+                    <td className="px-5 py-2.5 text-right tabular-nums text-signal-positive">
+                      {row.converted}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="border-t border-ink-100 px-5 py-3 text-xs text-ink-400">
+            Hot rate matters more than lead volume — a cheap campaign producing only nurture leads
+            costs more per sale than an expensive one producing buyers.
+          </p>
+        </section>
+      )}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <StatCard

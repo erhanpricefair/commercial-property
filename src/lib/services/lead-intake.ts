@@ -37,6 +37,8 @@ export function registerInvestor(input: LeadInput): IntakeResult {
   logActivity(investorId, "investor_registered", "Investor registered via the qualification form", {
     source: input.source ?? "website",
     landingPage: input.landingPage ?? null,
+    utmCampaign: input.utmCampaign || null,
+    utmContent: input.utmContent || null,
     propertyType: input.propertyType,
     budget: input.budget,
     locationScope: input.locationScope,
@@ -99,6 +101,12 @@ export function registerInvestor(input: LeadInput): IntakeResult {
       source: input.source ?? "website",
       sourceDetail: input.sourceDetail ?? null,
       landingPage: input.landingPage ?? null,
+      utmSource: input.utmSource || null,
+      utmMedium: input.utmMedium || null,
+      utmCampaign: input.utmCampaign || null,
+      utmContent: input.utmContent || null,
+      utmTerm: input.utmTerm || null,
+      clickId: input.clickId || null,
     },
     occurredAt: new Date().toISOString(),
   }).catch(() => undefined);

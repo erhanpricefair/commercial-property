@@ -348,6 +348,20 @@ export default async function InvestorDetailPage({
             </dl>
           </Panel>
 
+          {(investor.utm_campaign || investor.utm_source || investor.referrer) && (
+            <Panel title="Where this lead came from">
+              <dl className="divide-y divide-ink-50">
+                <SideField label="Campaign" value={investor.utm_campaign ?? "—"} />
+                <SideField label="Source" value={investor.utm_source ?? investor.source ?? "—"} />
+                <SideField label="Medium" value={investor.utm_medium ?? "—"} />
+                <SideField label="Creative" value={investor.utm_content ?? "—"} />
+                <SideField label="Term" value={investor.utm_term ?? "—"} />
+                <SideField label="Referrer" value={investor.referrer ?? "—"} />
+                <SideField label="Click ID" value={investor.click_id ? "Captured" : "—"} />
+              </dl>
+            </Panel>
+          )}
+
           <Panel title="Lead score (internal)">
             <div className="px-5 py-4">
               <div className="flex items-baseline gap-3">

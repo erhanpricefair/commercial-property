@@ -19,6 +19,7 @@ import {
   type Timeframe,
 } from "@/lib/taxonomy";
 import { CONVERSION_EVENTS, trackEvent } from "@/lib/analytics";
+import { attributionPayload, captureAttribution } from "@/lib/attribution";
 
 /**
  * Seven-step investor qualification form.
@@ -86,15 +87,41 @@ const STEP_HINTS = [
   "We'll only use these details to discuss opportunities with you.",
 ];
 
-export default function InvestorForm({ source }: { source?: string }) {
+/**
+ * `prefill` lets a campaign landing page pre-answer the questions its ad
+ * already established. Someone who clicked an ad about warehouses under $500k
+ * should not be asked those two questions again — message match is worth more
+ * conversions than a couple of extra data points, and they can still change
+ * the answer by stepping back.
+ */
+export type InvestorFormPrefill = Partial<
+  Pick<FormState, "propertyType" | "budget" | "locationScope">
+>;
+
+export default function InvestorForm({
+  source,
+  prefill,
+  compact = false,
+}: {
+  source?: string;
+  prefill?: InvestorFormPrefill;
+  compact?: boolean;
+}) {
   const router = useRouter();
-  const [step, setStep] = useState(0);
-  const [form, setForm] = useState<FormState>(INITIAL);
+  // Skip past any question the ad already answered.
+  const firstUnanswered = firstUnansweredStep(prefill);
+  const [step, setStep] = useState(firstUnanswered);
+  const [form, setForm] = useState<FormState>({ ...INITIAL, ...prefill });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const startedRef = useRef(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
+
+  // Record which ad sent them, before they touch anything.
+  useEffect(() => {
+    captureAttribution();
+  }, []);
 
   const set = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -110,19 +137,22 @@ export default function InvestorForm({ source }: { source?: string }) {
   const markStarted = useCallback(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+    const attribution = attributionPayload(source ?? "website");
     trackEvent(CONVERSION_EVENTS.investorFormStart, {
-      lead_source: source ?? "website",
-      landing_page: typeof window !== "undefined" ? window.location.pathname : undefined,
+      lead_source: attribution.source,
+      campaign: attribution.utmCampaign,
+      ad_content: attribution.utmContent,
+      landing_page: attribution.landingPage,
     });
   }, [source]);
 
   // Move focus to the new question so screen readers and keyboard users follow
   // the step change, and scroll the card back into view on small screens.
   useEffect(() => {
-    if (step === 0) return;
+    if (step === firstUnanswered) return;
     headingRef.current?.focus();
     headingRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [step]);
+  }, [step, firstUnanswered]);
 
   const goNext = useCallback(() => {
     setStep((s) => {
@@ -190,8 +220,7 @@ export default function InvestorForm({ source }: { source?: string }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ...form,
-            source: source ?? "website",
-            landingPage: window.location.pathname,
+            ...attributionPayload(source ?? "website"),
           }),
         });
 
@@ -215,8 +244,11 @@ export default function InvestorForm({ source }: { source?: string }) {
           return;
         }
 
+        const attribution = attributionPayload(source ?? "website");
         trackEvent(CONVERSION_EVENTS.investorFormComplete, {
-          lead_source: source ?? "website",
+          lead_source: attribution.source,
+          campaign: attribution.utmCampaign,
+          ad_content: attribution.utmContent,
           lead_category: data.leadCategory,
           budget: form.budget,
           property_type: form.propertyType,
@@ -255,7 +287,11 @@ export default function InvestorForm({ source }: { source?: string }) {
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="card p-0 sm:p-0">
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className={`card p-0 sm:p-0 ${compact ? "shadow-lift" : ""}`}
+    >
       {/* Progress */}
       <div className="border-b border-ink-100 px-6 pb-5 pt-6 sm:px-8">
         <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-ink-500">
@@ -627,6 +663,18 @@ function ContactStep({
       </div>
     </div>
   );
+}
+
+/**
+ * Where the form should open. A campaign that prefills property type and
+ * budget drops the visitor straight onto question three.
+ */
+function firstUnansweredStep(prefill?: InvestorFormPrefill): number {
+  if (!prefill) return 0;
+  if (!prefill.propertyType) return 0;
+  if (!prefill.budget) return 1;
+  if (!prefill.locationScope) return 2;
+  return 3;
 }
 
 /** Maps a server-side field error back to the step that owns it. */

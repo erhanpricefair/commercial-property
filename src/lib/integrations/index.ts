@@ -50,6 +50,12 @@ export type IntegrationPayload = {
     source?: string | null;
     sourceDetail?: string | null;
     landingPage?: string | null;
+    utmSource?: string | null;
+    utmMedium?: string | null;
+    utmCampaign?: string | null;
+    utmContent?: string | null;
+    utmTerm?: string | null;
+    clickId?: string | null;
   };
   occurredAt: string;
 };
@@ -93,6 +99,7 @@ const DESTINATIONS: Destination[] = [
         properties.commercial_finance_status = payload.criteria.financeStatus;
       }
       if (payload.internal) properties.commercial_lead_grade = payload.internal.classification;
+      if (payload.attribution?.utmCampaign) properties.hs_analytics_source_data_1 = payload.attribution.utmCampaign;
 
       await postJson(
         "https://api.hubapi.com/crm/v3/objects/contacts",

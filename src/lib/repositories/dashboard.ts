@@ -112,6 +112,38 @@ export function investorsWithMatches(limit = 10): DashboardInvestor[] {
     .all(limit) as DashboardInvestor[];
 }
 
+export type CampaignRow = {
+  utm_source: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  leads: number;
+  hot: number;
+  converted: number;
+};
+
+/**
+ * Lead volume and quality per campaign.
+ *
+ * This is the number that decides where the ad budget goes: raw lead count is
+ * misleading on its own, because a cheap campaign that produces only NURTURE
+ * leads is worse than an expensive one producing HOT buyers.
+ */
+export function campaignPerformance(limit = 12): CampaignRow[] {
+  return getDb()
+    .prepare(
+      `SELECT utm_source, utm_campaign, utm_content,
+              COUNT(*) AS leads,
+              SUM(CASE WHEN classification = 'HOT' THEN 1 ELSE 0 END) AS hot,
+              SUM(CASE WHEN status = 'converted' THEN 1 ELSE 0 END) AS converted
+         FROM investors
+        WHERE utm_campaign IS NOT NULL OR utm_source IS NOT NULL
+        GROUP BY utm_source, utm_campaign, utm_content
+        ORDER BY hot DESC, leads DESC
+        LIMIT ?`,
+    )
+    .all(limit) as CampaignRow[];
+}
+
 export function followUpQueue(limit = 10): DashboardInvestor[] {
   return getDb()
     .prepare(

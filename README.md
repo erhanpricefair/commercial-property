@@ -270,6 +270,23 @@ conversions.
 
 ---
 
+## Paid social campaigns
+
+Four dedicated landing pages at `/lp/<slug>` for Instagram and Facebook
+traffic, with UTM and click-ID attribution flowing through to a campaign
+performance table in the admin dashboard.
+
+Paid traffic behaves nothing like search traffic — cold, interrupted, almost
+entirely mobile — so these pages are built differently: no site navigation
+(every outbound link leaks a paid click), the form above the fold on a phone, a
+sticky CTA once it scrolls away, and the questions the ad already answered
+pre-filled so nobody is asked the same thing twice.
+
+**See [`docs/CAMPAIGNS.md`](docs/CAMPAIGNS.md)** for the URL tagging
+convention, the conversion events to optimise for, how to read the results —
+and the Meta financial-services verification requirement to check *before* you
+build the campaign.
+
 ## SEO
 
 Eight intent-targeted landing pages, statically generated:

@@ -15,6 +15,7 @@ const SRC = path.join(process.cwd(), "src");
 /** Every route that an anonymous visitor can reach. */
 const PUBLIC_ROUTE_DIRS = [
   "app/(site)",
+  "app/(campaign)",
   "app/sitemap.ts",
   "app/robots.ts",
 ];
@@ -168,6 +169,24 @@ describe("public surface cannot reach private data", () => {
     assert.ok(page.includes("index: false"), "presentation metadata must set index: false");
     const layout = fs.readFileSync(path.join(SRC, "app/(presentation)/layout.tsx"), "utf8");
     assert.ok(layout.includes("noindex"), "presentation layout must emit a noindex meta tag");
+  });
+
+  test("campaign landing pages stay out of the search index", () => {
+    // They intentionally duplicate the SEO pages' message and exist to receive
+    // paid clicks. Indexing them would compete with the pages built to rank.
+    const route = fs.readFileSync(path.join(SRC, "app/(campaign)/lp/[slug]/page.tsx"), "utf8");
+    assert.ok(route.includes("index: false"), "campaign pages must declare index: false");
+    const layout = fs.readFileSync(path.join(SRC, "app/(campaign)/layout.tsx"), "utf8");
+    assert.ok(layout.includes("index: false"), "campaign layout must default to noindex");
+  });
+
+  test("campaign pages carry no site navigation", () => {
+    // Every outbound link on a paid landing page leaks a click that was paid
+    // for. Only the legal links are allowed.
+    const component = readCode(path.join(SRC, "components/CampaignPage.tsx"));
+    for (const leak of ["/resources", "/how-it-works", "/opportunities", "/guide"]) {
+      assert.ok(!component.includes(`"${leak}"`), `campaign page must not link to ${leak}`);
+    }
   });
 
   test("private surfaces have their own root layout, not the public shell", () => {

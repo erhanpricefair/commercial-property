@@ -27,6 +27,20 @@ npm run typecheck && npm test && npm run audit:privacy
   return", "our development", "our project", "secret stocklist", "exclusive stock".
 - The sitemap importing a repository or listing `/admin`, `/api/` or `/opportunity/`.
 
+## Route groups
+
+`src/app` has four root layouts, one per group. This is not cosmetic:
+
+- `(site)` — public marketing. Header, footer, analytics.
+- `(campaign)` — paid landing pages at `/lp/*`. Analytics, no navigation
+  (an outbound link leaks a click that was paid for). noindex.
+- `(admin)` — no public chrome and **no analytics**: a nested layout would
+  report URLs like `/admin/investors/42` to GA and Meta.
+- `(presentation)` — same reasoning, plus `Referrer-Policy: no-referrer`.
+
+Never add a top-level `src/app/layout.tsx` — it would wrap every group in the
+public shell and reintroduce that leak. A test asserts it doesn't exist.
+
 ## Where things live
 
 - `src/lib/taxonomy.ts` — the shared vocabulary. The `value` strings are
@@ -37,8 +51,14 @@ npm run typecheck && npm test && npm run audit:privacy
 - `src/lib/services/lead-intake.ts` — the public/private seam. If a public route
   ever needs something that touches stock, it goes here, behind a return type
   that can't carry opportunity data.
-- `src/lib/content/` — all editorial copy. Adding an article or landing page is
-  a data change, not a code change.
+- `src/lib/content/` — all editorial copy. Adding an article, SEO page or
+  campaign is a data change, not a code change.
+- `src/lib/attribution.ts` — UTM/click-ID capture. First touch wins per
+  session; it must never throw, because blocked storage is common and a lost
+  UTM is much cheaper than a lost lead.
+- `src/lib/db.ts` — `addMissingColumns()` runs between the schema block and
+  any index over a late-added column. An index declared in the `CREATE TABLE`
+  block over a column added later will fail on every existing database.
 
 ## Conventions
 

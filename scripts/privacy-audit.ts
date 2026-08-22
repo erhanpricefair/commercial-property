@@ -55,7 +55,7 @@ function walk(dir: string): string[] {
   return fs.readdirSync(full).flatMap((entry) => walk(path.join(dir, entry)));
 }
 
-const publicRoutes = ["app/(site)", "app/sitemap.ts", "app/robots.ts"]
+const publicRoutes = ["app/(site)", "app/(campaign)", "app/sitemap.ts", "app/robots.ts"]
   .flatMap(walk)
   .filter((f) => /\.(ts|tsx)$/.test(f));
 
@@ -190,6 +190,8 @@ if (baseUrl) {
     "/warehouse-investment-melbourne", "/industrial-property-investment-melbourne",
     "/storage-property-investment", "/small-commercial-property-investment",
     "/commercial-property-for-investors", "/commercial-property-melbourne",
+    "/lp/warehouse-melbourne", "/lp/under-500k",
+    "/lp/diversify-from-residential", "/lp/storage-investment",
     "/sitemap.xml", "/robots.txt",
   ];
 
@@ -217,9 +219,19 @@ if (baseUrl) {
   }
   if (crawlFailures === 0) pass(`No private data or banned phrase on ${publicPaths.length} public pages`);
 
+  // Campaign pages must not be indexable.
+  for (const target of ["/lp/warehouse-melbourne", "/lp/under-500k"]) {
+    const html = await fetch(`${baseUrl}${target}`).then((r) => r.text()).catch(() => "");
+    if (/<meta name="robots"[^>]*noindex/i.test(html)) {
+      pass(`Campaign page ${target} declares noindex`);
+    } else {
+      fail(`Campaign page ${target} declares noindex`, "no noindex robots meta found");
+    }
+  }
+
   // Sitemap must not contain a private path.
   const sitemap = await fetch(`${baseUrl}/sitemap.xml`).then((r) => r.text()).catch(() => "");
-  const sitemapLeaks = ["/admin", "/opportunity/", "/api/"].filter((p) => sitemap.includes(p));
+  const sitemapLeaks = ["/admin", "/opportunity/", "/api/", "/lp/"].filter((p) => sitemap.includes(p));
   if (sitemapLeaks.length) {
     fail("sitemap.xml excludes private paths", sitemapLeaks.join(", "));
   } else {

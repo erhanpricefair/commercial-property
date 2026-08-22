@@ -19,6 +19,13 @@ export type InvestorRow = {
   source_detail: string | null;
   landing_page: string | null;
   consent_marketing: number;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
+  click_id: string | null;
+  referrer: string | null;
   created_at: string;
   updated_at: string;
   last_contact_at: string | null;
@@ -72,8 +79,9 @@ export function createInvestor(input: LeadInput): {
         `INSERT INTO investors
            (first_name, last_name, email, mobile, contact_method, notes_from_lead,
             lead_score, classification, status, source, source_detail, landing_page,
+            utm_source, utm_medium, utm_campaign, utm_content, utm_term, click_id, referrer,
             consent_marketing, next_followup_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?, ?, datetime('now', ?))`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', ?))`,
       )
       .run(
         input.firstName,
@@ -87,6 +95,13 @@ export function createInvestor(input: LeadInput): {
         input.source ?? "website",
         input.sourceDetail ?? null,
         input.landingPage ?? null,
+        input.utmSource || null,
+        input.utmMedium || null,
+        input.utmCampaign || null,
+        input.utmContent || null,
+        input.utmTerm || null,
+        input.clickId || null,
+        input.referrer || null,
         input.consentMarketing ? 1 : 0,
         `+${followUpDays} days`,
       );
@@ -140,6 +155,8 @@ export type InvestorFilters = {
   budget?: string;
   locationScope?: string;
   search?: string;
+  campaign?: string;
+  utmSource?: string;
   from?: string;
   to?: string;
   needsFollowUp?: boolean;
@@ -192,6 +209,14 @@ export function listInvestors(filters: InvestorFilters = {}): {
     );
     const like = `%${filters.search}%`;
     params.push(like, like, like, like, like);
+  }
+  if (filters.campaign) {
+    where.push("i.utm_campaign = ?");
+    params.push(filters.campaign);
+  }
+  if (filters.utmSource) {
+    where.push("i.utm_source = ?");
+    params.push(filters.utmSource);
   }
   if (filters.from) {
     where.push("date(i.created_at) >= date(?)");

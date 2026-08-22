@@ -39,6 +39,8 @@ export default async function InvestorsPage({ searchParams }: { searchParams: Se
     budget: get("budget") || undefined,
     locationScope: get("locationScope") || undefined,
     search: get("q") || undefined,
+    campaign: get("campaign") || undefined,
+    utmSource: get("utmSource") || undefined,
     from: get("from") || undefined,
     to: get("to") || undefined,
     needsFollowUp: get("followUp") === "1",
@@ -59,6 +61,8 @@ export default async function InvestorsPage({ searchParams }: { searchParams: Se
       budget: filters.budget,
       locationScope: filters.locationScope,
       q: filters.search,
+      campaign: filters.campaign,
+      utmSource: filters.utmSource,
       from: filters.from,
       to: filters.to,
       followUp: filters.needsFollowUp ? "1" : undefined,
@@ -114,6 +118,17 @@ export default async function InvestorsPage({ searchParams }: { searchParams: Se
             placeholder="Most recent"
             options={[{ value: "score", label: "Lead score" }, { value: "name", label: "Name" }]} />
           <div>
+            <label htmlFor="campaign" className="mb-1.5 block text-xs font-semibold text-ink-600">Campaign</label>
+            <input
+              id="campaign"
+              name="campaign"
+              type="text"
+              defaultValue={filters.campaign ?? ""}
+              placeholder="utm_campaign"
+              className="field-input !py-2.5 text-sm"
+            />
+          </div>
+          <div>
             <label htmlFor="from" className="mb-1.5 block text-xs font-semibold text-ink-600">From</label>
             <input id="from" name="from" type="date" defaultValue={filters.from ?? ""} className="field-input !py-2 text-sm" />
           </div>
@@ -152,13 +167,14 @@ export default async function InvestorsPage({ searchParams }: { searchParams: Se
               <th scope="col" className="px-4 py-3">Score</th>
               <th scope="col" className="px-4 py-3">Status</th>
               <th scope="col" className="px-4 py-3">Matches</th>
+              <th scope="col" className="px-4 py-3">Campaign</th>
               <th scope="col" className="px-4 py-3">Registered</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-50">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-ink-400">
+                <td colSpan={8} className="px-4 py-12 text-center text-ink-400">
                   No investors match these filters.
                 </td>
               </tr>
@@ -196,6 +212,18 @@ export default async function InvestorsPage({ searchParams }: { searchParams: Se
                     <span className="font-semibold text-brass-600">{row.match_count}</span>
                   ) : (
                     <span className="text-ink-300">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-xs text-ink-500">
+                  {row.utm_campaign ? (
+                    <>
+                      <p className="font-medium text-ink-700">{row.utm_campaign}</p>
+                      <p className="text-ink-400">
+                        {[row.utm_source, row.utm_content].filter(Boolean).join(" · ") || "—"}
+                      </p>
+                    </>
+                  ) : (
+                    <span className="text-ink-300">{row.source ?? "—"}</span>
                   )}
                 </td>
                 <td className="px-4 py-3 text-xs text-ink-500">{formatDate(row.created_at)}</td>
