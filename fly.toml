@@ -1,0 +1,53 @@
+# Fly.io deployment.
+#
+# Chosen because it gives a persistent volume, which SQLite requires — on
+# Vercel, Netlify or Cloud Run the filesystem is ephemeral and every deploy
+# would destroy the lead database.
+#
+#   fly launch --no-deploy --copy-config
+#   fly volumes create data --size 1 --region syd
+#   fly secrets set ADMIN_SESSION_TTL_HOURS=12 EMAIL_PROVIDER=resend RESEND_API_KEY=...
+#   fly deploy
+#   fly ssh console -c "npm run admin:create -- you@yourdomain.com.au 'Your Name'"
+
+app = "commercial-investor-access"
+primary_region = "syd"
+
+[build]
+  dockerfile = "Dockerfile"
+
+  [build.args]
+    # Public config is inlined at build time. Set these to your real values
+    # before the first deploy, or canonical URLs and the sitemap will be wrong.
+    NEXT_PUBLIC_SITE_URL = "https://yourdomain.com.au"
+    NEXT_PUBLIC_SITE_NAME = "Commercial Investor Access"
+    NEXT_PUBLIC_CONTACT_EMAIL = "invest@yourdomain.com.au"
+
+[env]
+  PORT = "3000"
+  DATABASE_PATH = "/data/platform.db"
+
+# The lead database. Back this up — it is the business.
+[mounts]
+  source = "data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  # Never scale to zero: a suspended machine adds latency to the first ad click
+  # of the day, and SQLite wants a single writer anyway.
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

@@ -83,20 +83,45 @@ if (leakyApis.length) {
   pass(`No public API imports the private opportunity repository (${publicApiRoutes.length} routes checked)`);
 }
 
-// Public APIs must be write-only: a GET that returns data is a read surface.
+/**
+ * Public APIs must be write-only: a GET that returns data is a read surface.
+ *
+ * One documented exception — the health endpoint has to answer a load
+ * balancer. It is allow-listed by name rather than by loosening the rule, and
+ * is separately checked below for private fields, so the exception cannot
+ * quietly grow into a leak.
+ */
+const READ_EXEMPT = new Set(["app/api/health/route.ts"]);
+
 const readableApis: string[] = [];
 for (const file of publicApiRoutes) {
+  const relative = path.relative(SRC, file).split(path.sep).join("/");
+  if (READ_EXEMPT.has(`app/${relative.replace(/^app\//, "")}`) || READ_EXEMPT.has(relative)) continue;
+
   const source = stripComments(fs.readFileSync(file, "utf8"));
-  const hasGet = /export async function GET/.test(source);
-  if (!hasGet) continue;
+  if (!/export async function GET/.test(source)) continue;
   // A GET that only 404s is fine.
   const getBody = source.slice(source.indexOf("export async function GET"));
   if (!/status:\s*404/.test(getBody)) readableApis.push(path.relative(process.cwd(), file));
 }
 if (readableApis.length) {
-  warn("Public API routes are write-only", `GET handlers returning data: ${readableApis.join(", ")}`);
+  fail("Public API routes are write-only", `GET handlers returning data: ${readableApis.join(", ")}`);
 } else {
-  pass("Public API routes are write-only");
+  pass(`Public API routes are write-only (${READ_EXEMPT.size} documented exception)`);
+}
+
+// The health endpoint is allowed to respond, but not to say anything private.
+const healthFile = path.join(SRC, "app/api/health/route.ts");
+if (fs.existsSync(healthFile)) {
+  const source = stripComments(fs.readFileSync(healthFile, "utf8"));
+  const leaks = ["opportunit", "developer", "address", "development_name", "email", "mobile"].filter(
+    (term) => source.includes(term),
+  );
+  if (leaks.length) {
+    fail("Health endpoint exposes no private data", `references: ${leaks.join(", ")}`);
+  } else {
+    pass("Health endpoint exposes no private data");
+  }
 }
 
 const BANNED = [

@@ -10,6 +10,8 @@ import {
   type DashboardInvestor,
 } from "@/lib/repositories/dashboard";
 import { ensureEmailTemplates } from "@/lib/email";
+import { getRevenueSnapshot } from "@/lib/repositories/deals";
+import RevenueTracker from "@/components/admin/RevenueTracker";
 import {
   ClassificationBadge,
   PageHeader,
@@ -27,6 +29,7 @@ export default async function AdminDashboard() {
   ensureEmailTemplates();
 
   const stats = getDashboardStats();
+  const revenue = getRevenueSnapshot();
   const [today, hot, matched, followUp] = [
     todaysLeads(8),
     hotLeads(8),
@@ -41,8 +44,12 @@ export default async function AdminDashboard() {
     <>
       <PageHeader
         title="Dashboard"
-        description="Investor pipeline and private opportunity matching."
+        description="Revenue, investor pipeline and private opportunity matching."
       />
+
+      <div className="mb-6">
+        <RevenueTracker snapshot={revenue} />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard

@@ -60,6 +60,19 @@ public shell and reintroduce that leak. A test asserts it doesn't exist.
   any index over a late-added column. An index declared in the `CREATE TABLE`
   block over a column added later will fail on every existing database.
 
+## Revenue model
+
+- `src/lib/revenue.ts` — pure forecasting. Stage probabilities are exported and
+  asserted in tests; keep them conservative. A flattering forecast hides a
+  shortfall until it is too late to act on.
+- Observed conversion is only trusted above a minimum sample
+  (`MIN_LEADS_FOR_OBSERVED` / `MIN_DEALS_FOR_OBSERVED` in
+  `repositories/deals.ts`). Below it, the stated assumption is used and the UI
+  says so.
+- Settlement speed is surfaced everywhere a deal or opportunity appears:
+  completed stock pays in weeks, off-the-plan pays on completion. Two equal
+  commissions are not equally useful.
+
 ## Conventions
 
 - Public copy uses "may", "can", "depending on the property", "investors should

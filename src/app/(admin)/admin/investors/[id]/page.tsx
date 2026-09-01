@@ -5,6 +5,8 @@ import { getInvestor } from "@/lib/repositories/investors";
 import { getMatchesForInvestor } from "@/lib/repositories/opportunities";
 import { listActivity, listNotes, listCommunications } from "@/lib/repositories/activity";
 import { listEmailTemplates } from "@/lib/email";
+import { listDealsForInvestor, getSetting } from "@/lib/repositories/deals";
+import DealPanel from "@/components/admin/DealPanel";
 import { scoreLead, type ScoringInput } from "@/lib/scoring";
 import {
   ClassificationBadge,
@@ -52,6 +54,8 @@ export default async function InvestorDetailPage({
   const activity = listActivity(investorId, 40);
   const communications = listCommunications(investorId);
   const templates = listEmailTemplates();
+  const deals = listDealsForInvestor(investorId);
+  const commissionRate = Number(getSetting("commission_rate")) || 4;
 
   const breakdown = prefs
     ? scoreLead({
@@ -239,6 +243,13 @@ export default async function InvestorDetailPage({
               </ul>
             )}
           </Panel>
+
+          <DealPanel
+            investorId={investorId}
+            deals={deals}
+            matches={matches}
+            commissionRate={commissionRate}
+          />
 
           {/* Notes */}
           <Panel title="Notes">

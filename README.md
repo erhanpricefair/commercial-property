@@ -378,6 +378,20 @@ database.
 
 ---
 
+## Getting to revenue
+
+- **[`docs/GO-LIVE.md`](docs/GO-LIVE.md)** — deploy in about 30 minutes, with
+  the hosting constraint that matters (SQLite needs a persistent disk) and a
+  pre-flight checklist to run before spending on traffic.
+- **[`docs/REVENUE-PLAN.md`](docs/REVENUE-PLAN.md)** — what a revenue target
+  actually requires in transactions, why settlement timing decides whether a
+  near-term target is reachable, and the sequence to work in.
+- **[`docs/CAMPAIGNS.md`](docs/CAMPAIGNS.md)** — paid social playbook.
+
+The admin dashboard carries a revenue tracker: banked, committed, a
+probability-weighted forecast, and the gap expressed as deals and registrations
+still needed. Set your target and commission rate in Admin → Settings.
+
 ## Deployment checklist
 
 1. Set `NEXT_PUBLIC_SITE_URL` to your real domain — canonicals, the sitemap and

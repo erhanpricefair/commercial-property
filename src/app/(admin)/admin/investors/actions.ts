@@ -8,6 +8,8 @@ import { recomputeMatchesForInvestor, createPresentation, revokePresentation } f
 import { getEmailTemplate, baseMergeVars } from "@/lib/email";
 import { renderTemplate } from "@/lib/email/templates";
 import { labelFor, type LeadStatus } from "@/lib/taxonomy";
+import { createDeal, updateDeal, deleteDeal, getSetting } from "@/lib/repositories/deals";
+import type { DealStage } from "@/lib/revenue";
 
 /**
  * Server actions for the admin investor workspace.
@@ -166,4 +168,65 @@ export async function queueTemplateAction(formData: FormData) {
   });
   logActivity(investorId, "email_queued", `Queued template: ${template.name}`, { by: admin.email });
   revalidatePath(`/admin/investors/${investorId}`);
+}
+
+/* ------------------------------------------------------------------ */
+/* Deals                                                               */
+/* ------------------------------------------------------------------ */
+
+export async function createDealAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const investorId = Number(formData.get("investorId"));
+  if (!investorId) return;
+
+  const price = Number(String(formData.get("price") ?? "").replace(/[^0-9.]/g, "")) || null;
+  const rate =
+    Number(String(formData.get("commissionRate") ?? "").replace(/[^0-9.]/g, "")) ||
+    Number(getSetting("commission_rate"));
+
+  createDeal({
+    investorId,
+    opportunityId: Number(formData.get("opportunityId")) || null,
+    stage: (String(formData.get("stage") || "opportunity_sent") as DealStage),
+    price,
+    commissionRate: rate,
+    expectedSettlement: String(formData.get("expectedSettlement") ?? "").trim() || null,
+    notes: String(formData.get("notes") ?? "").trim() || null,
+  });
+
+  logActivity(investorId, "deal_created", "Deal recorded", { by: admin.email });
+  revalidatePath(`/admin/investors/${investorId}`);
+  revalidatePath("/admin");
+  revalidatePath("/admin/deals");
+}
+
+export async function updateDealAction(formData: FormData) {
+  const admin = await requireAdmin();
+  const dealId = Number(formData.get("dealId"));
+  const investorId = Number(formData.get("investorId"));
+  if (!dealId) return;
+
+  const stage = String(formData.get("stage") || "") as DealStage;
+  const markPaid = formData.get("markPaid") === "on";
+
+  updateDeal(dealId, {
+    stage: stage || undefined,
+    commissionPaidAt: markPaid ? new Date().toISOString().slice(0, 10) : null,
+  });
+
+  logActivity(investorId || null, "deal_updated", `Deal moved to ${stage}`, { by: admin.email });
+  revalidatePath(`/admin/investors/${investorId}`);
+  revalidatePath("/admin");
+  revalidatePath("/admin/deals");
+}
+
+export async function deleteDealAction(formData: FormData) {
+  await requireAdmin();
+  const dealId = Number(formData.get("dealId"));
+  const investorId = Number(formData.get("investorId"));
+  if (!dealId) return;
+  deleteDeal(dealId);
+  revalidatePath(`/admin/investors/${investorId}`);
+  revalidatePath("/admin");
+  revalidatePath("/admin/deals");
 }

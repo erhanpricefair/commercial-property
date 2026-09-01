@@ -4,6 +4,7 @@ import { recomputeMatchesForInvestor } from "../repositories/opportunities";
 import { logActivity } from "../repositories/activity";
 import { queueRegistrationSequence, baseMergeVars } from "../email";
 import { dispatchLeadEvent } from "../integrations";
+import { notifyOwnerOfHotLead } from "../alerts";
 import { labelFor, type LeadClassification } from "../taxonomy";
 import type { LeadInput } from "../validation";
 
@@ -72,6 +73,15 @@ export function registerInvestor(input: LeadInput): IntakeResult {
     queueRegistrationSequence(investorId, mergeVars);
   } catch {
     // A template problem must not lose the registration.
+  }
+
+  // A HOT lead is worth interrupting someone for. Fired immediately rather
+  // than queued, because first-contact speed is the largest controllable
+  // factor in whether this registration becomes a sale.
+  if (classification === "HOT") {
+    void notifyOwnerOfHotLead({ investorId, input, classification, matchCount }).catch(
+      () => undefined,
+    );
   }
 
   // Fire-and-forget: the visitor should never wait on a third-party CRM.

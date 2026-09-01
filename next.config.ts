@@ -13,6 +13,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Emits a self-contained server bundle so the Docker image doesn't need
+  // node_modules — smaller image, faster cold start.
+  output: "standalone",
   poweredByHeader: false,
   serverExternalPackages: ["better-sqlite3"],
   async headers() {

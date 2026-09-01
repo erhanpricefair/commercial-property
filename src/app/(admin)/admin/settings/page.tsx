@@ -2,6 +2,8 @@ import { requireAdminPage } from "@/lib/admin-guard";
 import { integrationStatus, listIntegrationEvents } from "@/lib/integrations";
 import { PageHeader, Panel, formatDateTime } from "@/components/admin/ui";
 import { SITE } from "@/lib/site";
+import { getSettings } from "@/lib/repositories/deals";
+import { saveRevenueSettingsAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +26,7 @@ const ENV_CHECKS: { key: string; label: string; note: string }[] = [
 
 export default async function SettingsPage() {
   await requireAdminPage();
+  const settings = getSettings();
   const integrations = integrationStatus();
   const events = listIntegrationEvents(20);
 
@@ -33,6 +36,79 @@ export default async function SettingsPage() {
         title="Settings"
         description="Configuration status and outbound integration activity. Secret values are never displayed."
       />
+
+      <div className="mb-6">
+        <Panel title="Revenue target">
+          <form action={saveRevenueSettingsAction} className="grid gap-4 px-5 py-4 sm:grid-cols-4">
+            <div>
+              <label htmlFor="revenue_target" className="mb-1.5 block text-xs font-semibold text-ink-600">
+                Target (AUD commission)
+              </label>
+              <input
+                id="revenue_target"
+                name="revenue_target"
+                type="number"
+                min={0}
+                step={1000}
+                defaultValue={settings.revenue_target}
+                className="field-input !py-2.5 text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="commission_rate" className="mb-1.5 block text-xs font-semibold text-ink-600">
+                Commission rate (%)
+              </label>
+              <input
+                id="commission_rate"
+                name="commission_rate"
+                type="number"
+                min={0}
+                max={20}
+                step={0.1}
+                defaultValue={settings.commission_rate}
+                className="field-input !py-2.5 text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="target_date" className="mb-1.5 block text-xs font-semibold text-ink-600">
+                Target date
+              </label>
+              <input
+                id="target_date"
+                name="target_date"
+                type="date"
+                defaultValue={settings.target_date}
+                className="field-input !py-2.5 text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="assumed_conversion_rate" className="mb-1.5 block text-xs font-semibold text-ink-600">
+                Assumed conversion
+              </label>
+              <input
+                id="assumed_conversion_rate"
+                name="assumed_conversion_rate"
+                type="number"
+                min={0.001}
+                max={1}
+                step={0.005}
+                defaultValue={settings.assumed_conversion_rate}
+                className="field-input !py-2.5 text-sm"
+              />
+              <p className="mt-1 text-xs text-ink-400">Registrations to closed deals</p>
+            </div>
+            <div className="sm:col-span-4">
+              <button type="submit" className="btn-primary !min-h-[2.5rem] px-5 text-sm">
+                Save
+              </button>
+              <p className="mt-2 text-xs text-ink-400">
+                The assumed conversion rate is only used until real deals exist — after that the
+                dashboard uses your observed rate.
+              </p>
+            </div>
+          </form>
+        </Panel>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel title="Configuration">

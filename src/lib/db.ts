@@ -242,6 +242,39 @@ export function migrate(db: Database.Database): void {
       updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    /* ---------------- Deals + revenue ----------------
+       A deal is created when an investor commits to an opportunity. It is the
+       only place actual money is recorded, and it is what turns the pipeline
+       into a revenue forecast rather than a list of names.
+    ------------------------------------------------------------- */
+
+    CREATE TABLE IF NOT EXISTS deals (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      investor_id         INTEGER NOT NULL REFERENCES investors(id) ON DELETE CASCADE,
+      opportunity_id      INTEGER REFERENCES opportunities(id) ON DELETE SET NULL,
+      stage               TEXT NOT NULL DEFAULT 'opportunity_sent',
+      price               INTEGER,
+      commission_rate     REAL,
+      commission_amount   INTEGER,
+      /* When the commission is actually payable — the number that decides
+         whether this deal helps a near-term cash target. */
+      expected_settlement TEXT,
+      commission_paid_at  TEXT,
+      notes               TEXT,
+      created_at          TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at          TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_deals_investor ON deals(investor_id);
+    CREATE INDEX IF NOT EXISTS idx_deals_stage ON deals(stage);
+    CREATE INDEX IF NOT EXISTS idx_deals_settlement ON deals(expected_settlement);
+
+    /* Key/value configuration an admin can change without a deploy. */
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key         TEXT PRIMARY KEY,
+      value       TEXT NOT NULL,
+      updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     /* ---------------- Outbound integration queue ----------------
        Provider-agnostic. Each row is one delivery attempt to whatever
        destination is configured (webhook, Zapier, Make, HubSpot, Sheets).
