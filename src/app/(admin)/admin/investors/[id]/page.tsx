@@ -6,6 +6,8 @@ import { getMatchesForInvestor } from "@/lib/repositories/opportunities";
 import { listActivity, listNotes, listCommunications } from "@/lib/repositories/activity";
 import { listEmailTemplates } from "@/lib/email";
 import { listDealsForInvestor, getSetting } from "@/lib/repositories/deals";
+import { coverageMatchesForInvestor, coverageStats } from "@/lib/repositories/coverage";
+import CoverageMatches from "@/components/admin/CoverageMatches";
 import DealPanel from "@/components/admin/DealPanel";
 import { scoreLead, type ScoringInput } from "@/lib/scoring";
 import {
@@ -56,6 +58,8 @@ export default async function InvestorDetailPage({
   const templates = listEmailTemplates();
   const deals = listDealsForInvestor(investorId);
   const commissionRate = Number(getSetting("commission_rate")) || 4;
+  const coverage = coverageMatchesForInvestor(investorId);
+  const hasAnyCoverage = coverageStats().active > 0;
 
   const breakdown = prefs
     ? scoreLead({
@@ -130,7 +134,11 @@ export default async function InvestorDetailPage({
             )}
           </Panel>
 
-          {/* Matches — PRIVATE */}
+          <CoverageMatches matches={coverage} hasAnyCoverage={hasAnyCoverage} />
+
+          {/* Specific stock, when any has been recorded. Optional by design:
+              the system is fully usable without it. */}
+          {matches.length > 0 && (
           <Panel
             title={`Potential Matches: ${matches.length}`}
             empty={matches.length === 0}
@@ -243,6 +251,7 @@ export default async function InvestorDetailPage({
               </ul>
             )}
           </Panel>
+          )}
 
           <DealPanel
             investorId={investorId}

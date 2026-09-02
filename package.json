@@ -15,7 +15,8 @@
     "stocklist:import": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs scripts/import-stocklist.ts",
     "test": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs --test-reporter=spec --test tests/*.test.ts",
     "audit:privacy": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs scripts/privacy-audit.ts",
-    "email:dispatch": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs scripts/dispatch-emails.ts"
+    "email:dispatch": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs scripts/dispatch-emails.ts",
+    "coverage:seed": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs scripts/seed-coverage.ts"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",

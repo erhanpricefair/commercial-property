@@ -182,3 +182,189 @@ function scoreLocation(
       return 0;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* COVERAGE MATCHING                                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Matching an investor against COVERAGE rather than against stock.
+ *
+ * Coverage says "we can source this asset type, in this suburb, around this
+ * price". That is enough to answer the only question that matters when a
+ * registration arrives: is this someone we can actually help, and therefore
+ * someone to call?
+ *
+ * Deliberately band-to-band. An investor states a budget band; coverage states
+ * a price band; a match is an overlap. No exact price for any individual
+ * property is involved on either side, which is why this works without holding
+ * a channel partner's stocklist.
+ */
+
+export type CoverageArea = {
+  id: number;
+  property_type: string;
+  suburb: string | null;
+  region: string | null;
+  state: string | null;
+  price_min: number | null;
+  price_max: number | null;
+  frequency: string;
+  is_active: number;
+};
+
+export type CoverageMatch = {
+  coverageId: number;
+  score: number;
+  reasons: string[];
+};
+
+/**
+ * Coverage that comes up often is worth more than coverage that rarely does —
+ * but only as a tiebreaker.
+ *
+ * The range here is deliberately narrow. An earlier, wider spread let a
+ * frequently-available area in the wrong region outrank a rarely-available one
+ * that actually matched the investor's suburb and budget, which is exactly
+ * backwards: fit decides whether the call is worth making, availability only
+ * decides the order you make them in.
+ */
+const FREQUENCY_WEIGHT: Record<string, number> = {
+  regular: 1,
+  occasional: 0.92,
+  rare: 0.8,
+};
+
+export const FREQUENCY_LABELS: Record<string, string> = {
+  regular: "Comes up regularly",
+  occasional: "Comes up occasionally",
+  rare: "Rarely available",
+};
+
+export function matchCoverage(
+  criteria: MatchCriteria,
+  areas: CoverageArea[],
+  options: { minScore?: number; limit?: number } = {},
+): CoverageMatch[] {
+  const minScore = options.minScore ?? 45;
+  const results: CoverageMatch[] = [];
+
+  for (const area of areas) {
+    if (area.is_active !== 1) continue;
+    const result = scoreCoverage(criteria, area);
+    if (result.score >= minScore) results.push(result);
+  }
+
+  results.sort((a, b) => b.score - a.score || a.coverageId - b.coverageId);
+  return options.limit ? results.slice(0, options.limit) : results;
+}
+
+export function scoreCoverage(criteria: MatchCriteria, area: CoverageArea): CoverageMatch {
+  const reasons: string[] = [];
+  let score = 0;
+
+  /* Property type — 40 */
+  const compatible = TYPE_COMPATIBILITY[criteria.propertyType] ?? [];
+  if (area.property_type === criteria.propertyType) {
+    score += 40;
+    reasons.push("We cover this property type");
+  } else if (compatible.includes(area.property_type)) {
+    score += criteria.propertyType === "open" ? 32 : 26;
+    reasons.push("We cover a related asset class");
+  }
+
+  /* Budget band overlap — 35 */
+  const investorRange = BUDGET_RANGES[criteria.budget];
+  if (investorRange === null) {
+    score += 16;
+    reasons.push("No budget stated — worth a conversation to establish one");
+  } else {
+    const investorMin = investorRange.min;
+    const investorMax = investorRange.max ?? Number.POSITIVE_INFINITY;
+    const areaMin = area.price_min ?? 0;
+    const areaMax = area.price_max ?? Number.POSITIVE_INFINITY;
+
+    if (investorMin <= areaMax && areaMin <= investorMax) {
+      score += 35;
+      reasons.push("Their budget overlaps what we see at this price point");
+    } else {
+      // Adjacent bands are still worth a call — budgets flex once someone
+      // understands what their money actually reaches.
+      const gap = investorMin > areaMax ? investorMin - areaMax : areaMin - investorMax;
+      if (Number.isFinite(gap) && gap <= 100_000) {
+        score += 18;
+        reasons.push("Their budget sits just outside this band");
+      }
+    }
+  }
+
+  /* Location — 25 */
+  score += scoreCoverageLocation(criteria, area, reasons);
+
+  // Weight the whole thing by how often something actually comes up here.
+  const weight = FREQUENCY_WEIGHT[area.frequency] ?? 0.8;
+  const weighted = Math.round(score * weight);
+  if (weight < 1 && score > 0) {
+    reasons.push(FREQUENCY_LABELS[area.frequency] ?? "Availability varies");
+  }
+
+  return { coverageId: area.id, score: Math.min(100, weighted), reasons };
+}
+
+function scoreCoverageLocation(
+  criteria: MatchCriteria,
+  area: CoverageArea,
+  reasons: string[],
+): number {
+  const suburb = (area.suburb ?? "").toLowerCase();
+  const region = (area.region ?? "").toLowerCase();
+  const state = (area.state ?? "").toUpperCase();
+  const isVic = state === "VIC";
+  const inMelbourne =
+    GREATER_MELBOURNE_HINTS.some((hint) => suburb.includes(hint)) ||
+    region.includes("melbourne") ||
+    region.includes("metro");
+
+  const freeText = (criteria.locationFree ?? "").trim().toLowerCase();
+  if (freeText.length >= 3 && suburb && (suburb.includes(freeText) || freeText.includes(suburb))) {
+    reasons.push("Covers the suburb they named");
+    return 25;
+  }
+  if (freeText.length >= 3 && region && region.includes(freeText)) {
+    reasons.push("Covers the area they named");
+    return 23;
+  }
+
+  switch (criteria.locationScope) {
+    case "melbourne":
+    case "greater_melbourne":
+      if (isVic && inMelbourne) {
+        reasons.push("Melbourne metropolitan coverage");
+        return 25;
+      }
+      if (isVic) {
+        reasons.push("Victorian coverage, outside the metro area");
+        return 10;
+      }
+      return 0;
+    case "regional_vic":
+      if (isVic && !inMelbourne) {
+        reasons.push("Regional Victorian coverage");
+        return 25;
+      }
+      if (isVic) return 10;
+      return 0;
+    case "anywhere_vic":
+      if (isVic) {
+        reasons.push("Victorian coverage");
+        return 25;
+      }
+      return 5;
+    case "australia_wide":
+    case "open":
+      reasons.push("Investor is open on location");
+      return 18;
+    default:
+      return 0;
+  }
+}

@@ -11,6 +11,7 @@ import {
 } from "@/lib/repositories/dashboard";
 import { ensureEmailTemplates } from "@/lib/email";
 import { getRevenueSnapshot } from "@/lib/repositories/deals";
+import { coverageStats } from "@/lib/repositories/coverage";
 import RevenueTracker from "@/components/admin/RevenueTracker";
 import {
   ClassificationBadge,
@@ -30,6 +31,7 @@ export default async function AdminDashboard() {
 
   const stats = getDashboardStats();
   const revenue = getRevenueSnapshot();
+  const coverage = coverageStats();
   const [today, hot, matched, followUp] = [
     todaysLeads(8),
     hotLeads(8),
@@ -66,10 +68,17 @@ export default async function AdminDashboard() {
           tone="hot"
         />
         <StatCard
-          label="Investors With Matches"
-          value={stats.investorsWithMatches}
-          sub={`${stats.availableOpportunities} opportunities available`}
-          href="/admin/investors"
+          label="Coverage areas"
+          value={coverage.active}
+          sub={
+            coverage.active === 0
+              ? "Add coverage so matching works"
+              : coverage.stale > 0
+                ? `${coverage.stale} need re-confirming`
+                : "All confirmed recently"
+          }
+          href="/admin/coverage"
+          tone={coverage.active === 0 ? "hot" : "default"}
         />
         <StatCard
           label="Follow-Up Required"

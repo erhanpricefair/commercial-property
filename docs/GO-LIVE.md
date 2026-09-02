@@ -80,31 +80,19 @@ fly secrets set \
 Note the `NEXT_PUBLIC_*` values are inlined at **build** time — set them as
 build args in `fly.toml` and redeploy, not just as runtime secrets.
 
-## 6. Load your real stock
+## 6. Record your coverage
 
-⚠️ **Until you do this, the matching engine is matching investors against
-synthetic placeholder records.** Every "Potential Matches: 8" you see today is
-fictional.
-
-```bash
-fly ssh console
-npm run stocklist:import -- /data/stocklist.csv
-```
-
-(Copy the CSV up first with `fly sftp shell`, or paste it into a heredoc.)
-
-Column headers are matched loosely — see the table in the main README. Every
-imported row is marked PRIVATE and triggers a match recomputation.
-
-Then delete the demo records:
+Matching needs to know what you can source. It does **not** need your partner's
+stocklist — see [`COVERAGE.md`](COVERAGE.md) for why that distinction matters.
 
 ```bash
-fly ssh console -c "node --experimental-strip-types --conditions=react-server --import ./scripts/register-hooks.mjs -e \"
-import { getDb } from './src/lib/db.ts';
-const r = getDb().prepare(\\\"DELETE FROM opportunities WHERE reference LIKE 'SAMPLE-%'\\\").run();
-console.log('removed', r.changes, 'demo records');
-\""
+fly ssh console -c "npm run coverage:seed"
 ```
+
+That seeds ten broad Victorian bands, every one marked `VERIFY`. Then open
+**Admin → Coverage** and correct each band to what you can genuinely source.
+Takes about ten minutes and it is the difference between a call list you can
+trust and one you can't.
 
 ## 7. Schedule the follow-up dispatcher
 
@@ -144,8 +132,8 @@ It should report 0 failures. Then check by hand:
 - [ ] You received the HOT lead alert email
 - [ ] The welcome email arrived after running the dispatcher
 - [ ] `/admin` redirects to login when signed out
-- [ ] Your real stocklist is loaded and demo records are gone
-- [ ] A test investor shows real matches, not `SAMPLE-*`
+- [ ] Your coverage areas are recorded and verified (not left as `VERIFY`)
+- [ ] A test investor shows coverage matches that look right to you
 - [ ] The database is backed up somewhere off the host
 
 ---

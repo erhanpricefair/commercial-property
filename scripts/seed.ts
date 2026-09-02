@@ -3,27 +3,20 @@
  *
  *   npm run db:seed
  *
- * IMPORTANT — about the opportunity records below.
+ * Creates an admin and a handful of example investor registrations so the
+ * dashboard has something in it.
  *
- * The brief referred to a supplied commercial stocklist. No stocklist file was
- * present in this repository and none was attached, so the private opportunity
- * records seeded here are SYNTHETIC placeholders. They carry no real developer,
- * no real development name and no real address — the identifying fields are
- * filled with obvious placeholder text so it is impossible to mistake them for
- * live stock.
+ * It deliberately seeds NO opportunity records. An earlier version seeded
+ * synthetic placeholder stock, which made matching look like it was working
+ * when it was matching against fiction. Coverage is the honest equivalent:
  *
- * To load a real stocklist, use the CSV importer instead:
- *
- *   npm run stocklist:import -- ./data/stocklist.csv
- *
- * That marks every imported row PRIVATE / INTERNAL, exactly as these are.
- * Nothing seeded here is reachable from any public page.
+ *   npm run coverage:seed
  */
 import { getDb } from "../src/lib/db.ts";
 import { hashPassword } from "../src/lib/password.ts";
 import { ensureEmailTemplates } from "../src/lib/email/index.ts";
 import { createInvestor } from "../src/lib/repositories/investors.ts";
-import { computeYield, recomputeAllMatches } from "../src/lib/repositories/opportunities.ts";
+import { recomputeAllMatches } from "../src/lib/repositories/opportunities.ts";
 import type { LeadInput } from "../src/lib/validation.ts";
 
 const db = getDb();
@@ -45,69 +38,13 @@ if (!existingAdmin) {
   console.log(`Admin already exists: ${adminEmail}\n`);
 }
 
-/* ---------------- PRIVATE opportunities (synthetic) ---------------- */
+/* ---------------- Coverage ----------------
+   Coverage rather than stock, deliberately. See docs/COVERAGE.md — the short
+   version is that a channel partner's stocklist is their property, and the
+   platform is designed to run without holding it.
 
-type SeedOpportunity = {
-  reference: string;
-  property_type: string;
-  suburb: string;
-  state: string;
-  size_sqm: number;
-  price: number;
-  estimated_rental: number;
-  outgoings: number;
-  completion_status: string;
-  availability: string;
-};
-
-const SEED_OPPORTUNITIES: SeedOpportunity[] = [
-  { reference: "SAMPLE-001", property_type: "storage", suburb: "Coburg North", state: "VIC", size_sqm: 42, price: 245000, estimated_rental: 16800, outgoings: 3200, completion_status: "completed", availability: "available" },
-  { reference: "SAMPLE-002", property_type: "storage", suburb: "Thomastown", state: "VIC", size_sqm: 55, price: 298000, estimated_rental: 20500, outgoings: 3800, completion_status: "completed", availability: "available" },
-  { reference: "SAMPLE-003", property_type: "small_commercial", suburb: "Preston", state: "VIC", size_sqm: 88, price: 385000, estimated_rental: 26000, outgoings: 5200, completion_status: "completed", availability: "available" },
-  { reference: "SAMPLE-004", property_type: "warehouse", suburb: "Campbellfield", state: "VIC", size_sqm: 140, price: 465000, estimated_rental: 31500, outgoings: 6100, completion_status: "under_construction", availability: "available" },
-  { reference: "SAMPLE-005", property_type: "warehouse", suburb: "Dandenong South", state: "VIC", size_sqm: 210, price: 640000, estimated_rental: 43000, outgoings: 8200, completion_status: "completed", availability: "available" },
-  { reference: "SAMPLE-006", property_type: "industrial", suburb: "Truganina", state: "VIC", size_sqm: 320, price: 890000, estimated_rental: 58000, outgoings: 11500, completion_status: "off_the_plan", availability: "available" },
-  { reference: "SAMPLE-007", property_type: "industrial", suburb: "Laverton North", state: "VIC", size_sqm: 450, price: 1250000, estimated_rental: 82000, outgoings: 15800, completion_status: "completed", availability: "available" },
-  { reference: "SAMPLE-008", property_type: "small_commercial", suburb: "Ballarat", state: "VIC", size_sqm: 95, price: 320000, estimated_rental: 22000, outgoings: 4600, completion_status: "completed", availability: "available" },
-  { reference: "SAMPLE-009", property_type: "warehouse", suburb: "Bendigo", state: "VIC", size_sqm: 165, price: 425000, estimated_rental: 28500, outgoings: 5400, completion_status: "completed", availability: "on_hold" },
-  { reference: "SAMPLE-010", property_type: "storage", suburb: "Bayswater", state: "VIC", size_sqm: 38, price: 215000, estimated_rental: 14500, outgoings: 2900, completion_status: "completed", availability: "available" },
-  { reference: "SAMPLE-011", property_type: "small_commercial", suburb: "Moorabbin", state: "VIC", size_sqm: 110, price: 520000, estimated_rental: 34000, outgoings: 7100, completion_status: "completed", availability: "under_offer" },
-  { reference: "SAMPLE-012", property_type: "warehouse", suburb: "Epping", state: "VIC", size_sqm: 185, price: 545000, estimated_rental: 36500, outgoings: 7000, completion_status: "under_construction", availability: "available" },
-];
-
-const insertOpportunity = db.prepare(`
-  INSERT OR IGNORE INTO opportunities
-    (reference, visibility, property_type, suburb, state, size_sqm, price, estimated_rental,
-     outgoings, estimated_yield, completion_status, availability, internal_notes,
-     source_channel, developer, development_name, address, lot_unit_number)
-  VALUES
-    (@reference, 'PRIVATE', @property_type, @suburb, @state, @size_sqm, @price, @estimated_rental,
-     @outgoings, @estimated_yield, @completion_status, @availability, @internal_notes,
-     @source_channel, @developer, @development_name, @address, @lot_unit_number)
-`);
-
-const seedOpportunities = db.transaction(() => {
-  for (const opportunity of SEED_OPPORTUNITIES) {
-    insertOpportunity.run({
-      ...opportunity,
-      estimated_yield: computeYield(
-        opportunity.price,
-        opportunity.estimated_rental,
-        opportunity.outgoings,
-      ),
-      internal_notes:
-        "SYNTHETIC SEED RECORD — not real stock. Replace via `npm run stocklist:import`.",
-      // Placeholder values only. Deliberately not real identities.
-      source_channel: "PLACEHOLDER — channel partner",
-      developer: "PLACEHOLDER — developer name",
-      development_name: "PLACEHOLDER — development name",
-      address: "PLACEHOLDER — street address",
-      lot_unit_number: "PLACEHOLDER — lot/unit",
-    });
-  }
-});
-seedOpportunities();
-console.log(`Seeded ${SEED_OPPORTUNITIES.length} PRIVATE opportunity records (synthetic).`);
+   Run `npm run coverage:seed` for starter coverage bands.
+------------------------------------------------------- */
 
 /* ---------------- Investors ---------------- */
 
@@ -164,7 +101,9 @@ console.log(`Seeded ${created} investor registration(s).`);
 
 /* ---------------- Matching ---------------- */
 
-const { investors, matches } = recomputeAllMatches();
-console.log(`Computed matches for ${investors} investor(s): ${matches} total.`);
+const { investors } = recomputeAllMatches();
+console.log(`Recomputed stock matches for ${investors} investor(s).`);
 
 console.log("\nSeed complete. Sign in at /admin/login");
+console.log("\nNEXT: run `npm run coverage:seed`, then correct the bands in");
+console.log("Admin → Coverage. Matching runs on coverage, not on a stocklist.");

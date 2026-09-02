@@ -60,6 +60,23 @@ public shell and reintroduce that leak. A test asserts it doesn't exist.
   any index over a late-added column. An index declared in the `CREATE TABLE`
   block over a column added later will fail on every existing database.
 
+## Coverage vs stock
+
+`coverage_areas` is the primary matching source: asset type, suburb/area, price
+band. It has **no columns** for developer, development name, address, lot
+number or source channel, and `tests/coverage.test.ts` asserts they stay
+absent. Never add one — the protection is structural, not procedural, and that
+is the whole point.
+
+`opportunities` (with the private fields) is optional and secondary, for the
+case where a partner has cleared a specific property. Nothing in the platform
+requires a row in it.
+
+Matching is band-to-band: investor budget band overlapping coverage price band.
+Fit dominates ranking; availability frequency is only a tiebreaker — a narrow
+weighting range (1 / 0.92 / 0.8) keeps a rare-but-right match ahead of a
+common-but-wrong one.
+
 ## Revenue model
 
 - `src/lib/revenue.ts` — pure forecasting. Stage probabilities are exported and

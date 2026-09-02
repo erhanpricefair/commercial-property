@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireAdminPage } from "@/lib/admin-guard";
 import { getDb } from "@/lib/db";
 import { getMatchesForInvestor } from "@/lib/repositories/opportunities";
+import { coverageMatchesForInvestor } from "@/lib/repositories/coverage";
+import { FREQUENCY_LABELS } from "@/lib/matching";
 import { getSetting } from "@/lib/repositories/deals";
 import { commissionFor, settlementSpeed } from "@/lib/revenue";
 import {
@@ -145,10 +147,22 @@ async function CallSection({
 }
 
 async function CallCard({ row, commissionRate }: { row: CallRow; commissionRate: number }) {
-  // The pre-call brief: what we could actually put in front of them, and what
-  // it would be worth. Knowing this before dialling changes the conversation.
+  /**
+   * The pre-call brief.
+   *
+   * Coverage first, because it is always accurate: it says whether this is
+   * someone we can source for. Specific stock is shown only where it has been
+   * recorded — most of the time the honest answer before a call is "yes, this
+   * is our patch", and what is available today is a question for the channel
+   * partner.
+   */
+  const coverage = coverageMatchesForInvestor(row.id).slice(0, 3);
   const matches = getMatchesForInvestor(row.id).slice(0, 3);
-  const bestValue = matches.reduce((max, m) => Math.max(max, m.price ?? 0), 0);
+
+  // Indicative commission from the coverage band, so the card still shows what
+  // the call is worth without any specific property behind it.
+  const bandTop = coverage.reduce((max, c) => Math.max(max, c.price_max ?? c.price_min ?? 0), 0);
+  const bestValue = matches.reduce((max, m) => Math.max(max, m.price ?? 0), 0) || bandTop;
   const potentialCommission = commissionFor(bestValue, commissionRate);
   const tel = row.mobile.replace(/[^\d+]/g, "");
 
@@ -182,7 +196,9 @@ async function CallCard({ row, commissionRate }: { row: CallRow; commissionRate:
               <p className="font-display text-display-sm text-brass-600">
                 {formatCurrency(potentialCommission)}
               </p>
-              <p className="text-[0.6875rem] text-ink-400">potential commission</p>
+              <p className="text-[0.6875rem] text-ink-400">
+                {matches.length > 0 ? "potential commission" : "indicative at band top"}
+              </p>
             </div>
           ) : null}
         </div>
@@ -212,10 +228,41 @@ async function CallCard({ row, commissionRate }: { row: CallRow; commissionRate:
           </p>
         )}
 
+        {coverage.length > 0 && (
+          <div className="mt-3">
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-wider text-ink-500">
+              We cover this
+            </p>
+            <ul className="mt-1.5 space-y-1">
+              {coverage.map((area) => (
+                <li key={area.id} className="text-xs text-ink-600">
+                  <span className="font-medium text-ink-800">
+                    {labelFor("propertyType", area.property_type)}
+                  </span>
+                  {" · "}
+                  {area.suburb || area.region || area.state}
+                  {" · "}
+                  {formatCurrency(area.price_min)}–{formatCurrency(area.price_max)}
+                  <span className="ml-1.5 text-ink-400">
+                    {FREQUENCY_LABELS[area.frequency] ?? area.frequency}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {coverage.length === 0 && (
+          <p className="mt-3 rounded-lg bg-canvas-sunken px-3 py-2 text-xs text-ink-500">
+            No coverage recorded for what they want yet. Worth calling to test how firm their
+            criteria are.
+          </p>
+        )}
+
         {matches.length > 0 && (
           <div className="mt-3">
             <p className="text-[0.6875rem] font-semibold uppercase tracking-wider text-ink-500">
-              Could show them
+              Specific stock on file
             </p>
             <ul className="mt-1.5 space-y-1">
               {matches.map((match) => {

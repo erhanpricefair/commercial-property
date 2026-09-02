@@ -127,16 +127,36 @@ page claims commercial property is better than residential.
 
 ---
 
-## Loading your stocklist
+## Coverage vs stock
 
-⚠️ **The repository contained no stocklist file and none was supplied with the
-brief.** The 12 opportunity records created by `npm run db:seed` are
-**synthetic placeholders** — their developer, development name, address and
-lot/unit fields contain the literal text `PLACEHOLDER — …` so they cannot be
-mistaken for live stock. The privacy audit ignores those placeholder strings
-when crawling.
+The platform's primary matching source is **coverage** — what you can source,
+described as an asset type, a suburb or area, and a price band. Not a
+stocklist.
 
-To load real stock:
+This is deliberate. A channel partner's stocklist is their property, and the
+`coverage_areas` table has **no columns** for a developer, development name,
+address or lot number — so a specific property cannot be recorded there even by
+accident. A test keeps it that way.
+
+Coverage answers the question you actually need answered when a registration
+arrives: *is this someone we can help, and therefore someone to call?* What is
+available on the day stays with your partner.
+
+```bash
+npm run coverage:seed   # ten starter bands, all marked VERIFY
+```
+
+See **[`docs/COVERAGE.md`](docs/COVERAGE.md)**.
+
+## Loading a stocklist (only when authorised)
+
+⚠️ **You probably don't need this.** Coverage is enough to run the business,
+and recording a partner's stock carries a relationship risk that coverage does
+not. Use this only where a partner has explicitly cleared you to record and
+present a specific property.
+
+The Opportunities section holds the full private fields for that case. To
+import in bulk:
 
 ```bash
 npm run stocklist:import -- ./data/stocklist.csv

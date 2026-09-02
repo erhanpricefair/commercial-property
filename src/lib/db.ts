@@ -152,6 +152,45 @@ export function migrate(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_opps_state ON opportunities(state);
     CREATE INDEX IF NOT EXISTS idx_opps_availability ON opportunities(availability);
 
+    /* ---------------- COVERAGE AREAS ----------------
+       What we can source, described at market level: an asset type, a suburb
+       and a price band.
+
+       This is deliberately NOT a stocklist, and the difference is structural
+       rather than a matter of discipline: this table HAS NO COLUMNS for a
+       developer, a development name, an address or a lot number, so a specific
+       property cannot be recorded here even by accident.
+
+       Coverage answers "can we help this investor?" — which is all that is
+       needed to decide who to call. What is actually available on any given
+       day is a question for the channel partner at the time, not something
+       this system stores.
+    ------------------------------------------------------------- */
+
+    CREATE TABLE IF NOT EXISTS coverage_areas (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      property_type     TEXT NOT NULL,
+      suburb            TEXT,
+      region            TEXT,
+      state             TEXT NOT NULL DEFAULT 'VIC',
+      price_min         INTEGER,
+      price_max         INTEGER,
+      size_min_sqm      INTEGER,
+      size_max_sqm      INTEGER,
+      /* Typical, band-level. Never a figure tied to one property. */
+      typical_completion TEXT,
+      /* how often something suitable comes up: regular | occasional | rare */
+      frequency         TEXT NOT NULL DEFAULT 'occasional',
+      is_active         INTEGER NOT NULL DEFAULT 1,
+      last_confirmed_at TEXT,
+      notes             TEXT,
+      created_at        TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at        TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_coverage_type ON coverage_areas(property_type);
+    CREATE INDEX IF NOT EXISTS idx_coverage_state ON coverage_areas(state);
+    CREATE INDEX IF NOT EXISTS idx_coverage_active ON coverage_areas(is_active);
+
     /* ---------------- Matching ---------------- */
 
     CREATE TABLE IF NOT EXISTS opportunity_matches (

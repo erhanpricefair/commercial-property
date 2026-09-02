@@ -65,7 +65,7 @@ everything available is off-the-plan, no amount of lead generation produces
 cash in the next few months, and you'd be better off negotiating terms than
 buying traffic.
 
-**The platform now reflects this.** Every opportunity and deal shows a
+**The platform now reflects this.** Every coverage area and deal shows a
 settlement-speed flag — *Settles in weeks* in green for completed stock,
 *Settles on completion* for the rest — on the call list, the deal record and
 the dashboard. The dashboard also shows how much commission is sitting in
@@ -106,8 +106,10 @@ rate per campaign, not just the lead count.
 
 **This week — nothing else matters until these are done**
 
-1. **Load your real stocklist.** The database currently holds 12 synthetic
-   placeholder records. Every match shown today is fictional. → `docs/GO-LIVE.md` §6
+1. **Record your coverage.** Not a stocklist — asset type, suburb or area, and
+   a price band, from your own market knowledge. Five or six rows is enough,
+   and matching works from the first one. `npm run coverage:seed` gives you
+   starter bands to correct. → `docs/COVERAGE.md`
 2. **Deploy.** No traffic can arrive at a repository. → `docs/GO-LIVE.md`
 3. **Ask your channel partner the three payment-timing questions above.**
 4. **Set your target and commission rate** in Admin → Settings.
