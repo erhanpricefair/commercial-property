@@ -274,3 +274,58 @@ export function labelFor(group: keyof typeof LABELS, value: string | null | unde
   if (!value) return "—";
   return LABELS[group]?.[value] ?? value;
 }
+
+/* ------------------------------------------------------------------ */
+/* Coverage regions (ADMIN ONLY)                                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The areas coverage can be recorded against.
+ *
+ * Structured rather than free text on purpose: whether an area counts as
+ * metropolitan drives location matching, and deriving that by sniffing a typed
+ * string ("Nth Melbourne", "Melb North") fails silently — an investor who
+ * asked for Melbourne quietly stops matching coverage that does cover them.
+ */
+export const COVERAGE_REGIONS = [
+  { value: "inner_melbourne", label: "Inner Melbourne", state: "VIC", isMetro: true },
+  { value: "northern_melbourne", label: "Northern Melbourne", state: "VIC", isMetro: true },
+  { value: "western_melbourne", label: "Western Melbourne", state: "VIC", isMetro: true },
+  { value: "eastern_melbourne", label: "Eastern Melbourne", state: "VIC", isMetro: true },
+  { value: "south_east_melbourne", label: "South East Melbourne", state: "VIC", isMetro: true },
+  { value: "mornington_peninsula", label: "Mornington Peninsula", state: "VIC", isMetro: false },
+  { value: "geelong", label: "Geelong & Surf Coast", state: "VIC", isMetro: false },
+  { value: "ballarat", label: "Ballarat & Central Highlands", state: "VIC", isMetro: false },
+  { value: "bendigo", label: "Bendigo & Loddon", state: "VIC", isMetro: false },
+  { value: "gippsland", label: "Gippsland", state: "VIC", isMetro: false },
+  { value: "goulburn", label: "Goulburn & Shepparton", state: "VIC", isMetro: false },
+  { value: "regional_vic_other", label: "Regional Victoria (other)", state: "VIC", isMetro: false },
+  { value: "interstate", label: "Interstate", state: "", isMetro: false },
+] as const;
+
+export type CoverageRegion = (typeof COVERAGE_REGIONS)[number]["value"];
+
+const REGION_BY_VALUE = new Map(COVERAGE_REGIONS.map((r) => [r.value as string, r]));
+
+export function regionLabel(value: string | null | undefined): string {
+  if (!value) return "—";
+  return REGION_BY_VALUE.get(value)?.label ?? value;
+}
+
+/**
+ * Whether a stored region is metropolitan.
+ *
+ * Falls back to a loose label match so rows written before regions were
+ * structured (free text like "Northern Melbourne") keep matching correctly
+ * instead of silently dropping out.
+ */
+export function regionIsMetro(value: string | null | undefined): boolean | null {
+  if (!value) return null;
+  const known = REGION_BY_VALUE.get(value);
+  if (known) return known.isMetro;
+
+  const text = value.toLowerCase();
+  if (text.includes("melbourne") || text.includes("metro")) return true;
+  if (text.includes("regional")) return false;
+  return null;
+}

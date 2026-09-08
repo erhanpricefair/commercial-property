@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Panel, formatCurrency } from "@/components/admin/ui";
 import { FREQUENCY_LABELS } from "@/lib/matching";
 import { settlementSpeed } from "@/lib/revenue";
-import { labelFor } from "@/lib/taxonomy";
-import type { CoverageMatchRow } from "@/lib/repositories/coverage";
+import { labelFor, regionLabel } from "@/lib/taxonomy";
+import type { GroupedCoverageMatch } from "@/lib/repositories/coverage";
 
 /**
  * What we can help this investor with.
@@ -17,12 +17,12 @@ export default function CoverageMatches({
   matches,
   hasAnyCoverage,
 }: {
-  matches: CoverageMatchRow[];
+  matches: GroupedCoverageMatch[];
   hasAnyCoverage: boolean;
 }) {
   return (
     <Panel
-      title={`Can we help them? ${matches.length > 0 ? `Yes — ${matches.length} coverage area${matches.length === 1 ? "" : "s"}` : ""}`}
+      title={`Can we help them? ${matches.length > 0 ? `Yes — ${matches.length} area${matches.length === 1 ? "" : "s"} we cover` : ""}`}
       action={
         <Link href="/admin/coverage" className="text-xs font-semibold text-ink-600 hover:text-ink-900">
           Manage coverage
@@ -56,14 +56,17 @@ export default function CoverageMatches({
             {matches.map((match) => {
               const speed = settlementSpeed(match.typical_completion);
               return (
-                <li key={match.id} className="px-5 py-4">
+                <li key={match.key} className="px-5 py-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-ink-900">
                         {labelFor("propertyType", match.property_type)}
                         {" · "}
-                        {match.suburb || match.region || match.state}
+                        {regionLabel(match.region)}
                       </p>
+                      {match.suburbs.length > 0 && (
+                        <p className="mt-1 text-xs text-ink-700">{match.suburbs.join(" · ")}</p>
+                      )}
                       <p className="mt-1 text-xs text-ink-600">
                         {formatCurrency(match.price_min)} – {formatCurrency(match.price_max)}
                         {" · "}

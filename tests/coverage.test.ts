@@ -2,7 +2,13 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { matchCoverage, scoreCoverage, type CoverageArea, type MatchCriteria } from "../src/lib/matching.ts";
+import {
+  matchCoverage,
+  scoreCoverage,
+  groupCoverageMatches,
+  type CoverageArea,
+  type MatchCriteria,
+} from "../src/lib/matching.ts";
 
 const coverage: CoverageArea[] = [
   { id: 1, property_type: "storage", suburb: "Coburg North", region: "Northern Melbourne", state: "VIC", price_min: 200_000, price_max: 320_000, frequency: "regular", is_active: 1 },
@@ -120,6 +126,109 @@ describe("coverage matching", () => {
 
   test("no coverage recorded yields no matches rather than throwing", () => {
     assert.deepEqual(matchCoverage(storageInvestor, []), []);
+  });
+});
+
+describe("suburb-level coverage", () => {
+  const northern: CoverageArea[] = [
+    { id: 10, property_type: "storage", suburb: "Coburg North", region: "northern_melbourne", state: "VIC", price_min: 180_000, price_max: 320_000, frequency: "occasional", is_active: 1 },
+    { id: 11, property_type: "storage", suburb: "Braeside", region: "south_east_melbourne", state: "VIC", price_min: 190_000, price_max: 340_000, frequency: "occasional", is_active: 1 },
+    { id: 12, property_type: "small_commercial", suburb: "Ballarat", region: "ballarat", state: "VIC", price_min: 250_000, price_max: 500_000, frequency: "rare", is_active: 1 },
+    { id: 13, property_type: "small_commercial", suburb: "Preston", region: "northern_melbourne", state: "VIC", price_min: 300_000, price_max: 600_000, frequency: "occasional", is_active: 1 },
+  ];
+
+  test('"northern suburbs" finds Northern Melbourne', () => {
+    const north = scoreCoverage(
+      { ...storageInvestor, locationFree: "Northern suburbs" },
+      northern[0],
+    );
+    const southEast = scoreCoverage(
+      { ...storageInvestor, locationFree: "Northern suburbs" },
+      northern[1],
+    );
+    assert.ok(north.score > southEast.score, `${north.score} should beat ${southEast.score}`);
+    assert.ok(north.reasons.some((r) => r.includes("area they named")));
+  });
+
+  test("generic words alone don't pick a region", () => {
+    // "Melbourne" describes every metro precinct equally, so it must not give
+    // one of them a named-area bonus over the others.
+    const a = scoreCoverage({ ...storageInvestor, locationFree: "Melbourne" }, northern[0]);
+    const b = scoreCoverage({ ...storageInvestor, locationFree: "Melbourne" }, northern[1]);
+    assert.equal(a.score, b.score);
+  });
+
+  test("a named regional suburb beats a metro precinct for a regional investor", () => {
+    const criteria: MatchCriteria = {
+      propertyType: "small_commercial",
+      budget: "under_300k",
+      locationScope: "regional_vic",
+      locationFree: "Ballarat",
+      priorities: [],
+    };
+    const ballarat = scoreCoverage(criteria, northern[2]); // rare, but named + regional
+    const preston = scoreCoverage(criteria, northern[3]);  // occasional, but metro
+    assert.ok(
+      ballarat.score > preston.score,
+      `named regional (${ballarat.score}) should beat metro (${preston.score})`,
+    );
+  });
+
+  test("availability adjusts the order but never overturns location fit", () => {
+    const criteria: MatchCriteria = {
+      propertyType: "small_commercial",
+      budget: "300k_500k",
+      locationScope: "regional_vic",
+      locationFree: null,
+      priorities: [],
+    };
+    // Rare regional against frequently-available metro, for a regional investor.
+    const regionalRare = scoreCoverage(criteria, northern[2]);
+    const metroRegular = scoreCoverage(criteria, { ...northern[3], frequency: "regular" });
+    assert.ok(
+      regionalRare.score > metroRegular.score,
+      `regional (${regionalRare.score}) should still beat metro (${metroRegular.score})`,
+    );
+  });
+});
+
+describe("grouping matches by precinct", () => {
+  const rows = [
+    { property_type: "storage", suburb: "Coburg North", region: "northern_melbourne", price_min: 180_000, price_max: 320_000, frequency: "occasional", typical_completion: "completed", match_score: 98, reasons: ["We cover this property type"] },
+    { property_type: "storage", suburb: "Thomastown", region: "northern_melbourne", price_min: 200_000, price_max: 360_000, frequency: "occasional", typical_completion: "completed", match_score: 92, reasons: ["Melbourne metropolitan coverage"] },
+    { property_type: "storage", suburb: "Braeside", region: "south_east_melbourne", price_min: 190_000, price_max: 340_000, frequency: "occasional", typical_completion: "completed", match_score: 96, reasons: ["We cover this property type"] },
+  ];
+
+  test("collapses suburbs in the same type and precinct into one row", () => {
+    const grouped = groupCoverageMatches(rows);
+    assert.equal(grouped.length, 2);
+    const north = grouped.find((g) => g.region === "northern_melbourne")!;
+    assert.deepEqual(north.suburbs, ["Coburg North", "Thomastown"]);
+  });
+
+  test("a group is worth what its best member is worth", () => {
+    const north = groupCoverageMatches(rows).find((g) => g.region === "northern_melbourne")!;
+    assert.equal(north.match_score, 98);
+  });
+
+  test("the band spans the whole precinct", () => {
+    const north = groupCoverageMatches(rows).find((g) => g.region === "northern_melbourne")!;
+    assert.equal(north.price_min, 180_000);
+    assert.equal(north.price_max, 360_000);
+  });
+
+  test("reasons merge without duplicating", () => {
+    const north = groupCoverageMatches(rows).find((g) => g.region === "northern_melbourne")!;
+    assert.equal(new Set(north.reasons).size, north.reasons.length);
+  });
+
+  test("groups are ordered by score", () => {
+    const grouped = groupCoverageMatches(rows);
+    assert.ok(grouped[0].match_score >= grouped[1].match_score);
+  });
+
+  test("grouping nothing returns nothing", () => {
+    assert.deepEqual(groupCoverageMatches([]), []);
   });
 });
 

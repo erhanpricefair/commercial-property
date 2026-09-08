@@ -1,7 +1,15 @@
 import { requireAdminPage } from "@/lib/admin-guard";
 import { listCoverage, coverageStats } from "@/lib/repositories/coverage";
 import { PageHeader, formatCurrency, formatDate } from "@/components/admin/ui";
-import { AU_STATES, COMPLETION_LABELS, COMPLETION_STATUSES, PROPERTY_TYPE_OPTIONS, labelFor } from "@/lib/taxonomy";
+import {
+  AU_STATES,
+  COMPLETION_LABELS,
+  COMPLETION_STATUSES,
+  COVERAGE_REGIONS,
+  PROPERTY_TYPE_OPTIONS,
+  labelFor,
+  regionLabel,
+} from "@/lib/taxonomy";
 import { FREQUENCY_LABELS } from "@/lib/matching";
 import {
   createCoverageAction,
@@ -69,12 +77,28 @@ export default async function CoveragePage() {
               ))}
             </select>
           </Field>
-          <Field label="Suburb" htmlFor="suburb" hint="Or leave blank and use area">
-            <input id="suburb" name="suburb" type="text" placeholder="Coburg North" className="field-input !py-2.5 text-sm" />
+          <Field label="Area" htmlFor="region">
+            <select id="region" name="region" defaultValue="northern_melbourne" className="field-input !py-2.5 text-sm">
+              {COVERAGE_REGIONS.map((r) => (
+                <option key={r.value} value={r.value}>{r.label}</option>
+              ))}
+            </select>
           </Field>
-          <Field label="Area" htmlFor="region" hint="e.g. Northern Melbourne">
-            <input id="region" name="region" type="text" placeholder="Northern Melbourne" className="field-input !py-2.5 text-sm" />
-          </Field>
+          <div className="sm:col-span-2">
+            <Field
+              label="Suburbs"
+              htmlFor="suburbs"
+              hint="Comma or line separated — one row is created per suburb. Leave blank to cover the whole area."
+            >
+              <textarea
+                id="suburbs"
+                name="suburbs"
+                rows={2}
+                placeholder="Coburg North, Campbellfield, Thomastown"
+                className="field-input !py-2.5 text-sm"
+              />
+            </Field>
+          </div>
           <Field label="State" htmlFor="state">
             <select id="state" name="state" defaultValue="VIC" className="field-input !py-2.5 text-sm">
               {AU_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -138,7 +162,15 @@ export default async function CoveragePage() {
                     <input id={`s-${row.id}`} name="suburb" defaultValue={row.suburb ?? ""} className="field-input !py-2 text-sm" />
                   </Field>
                   <Field label="Area" htmlFor={`r-${row.id}`}>
-                    <input id={`r-${row.id}`} name="region" defaultValue={row.region ?? ""} className="field-input !py-2 text-sm" />
+                    <select id={`r-${row.id}`} name="region" defaultValue={row.region ?? ""} className="field-input !py-2 text-sm">
+                      <option value="">—</option>
+                      {COVERAGE_REGIONS.map((r) => (
+                        <option key={r.value} value={r.value}>{r.label}</option>
+                      ))}
+                      {row.region && !COVERAGE_REGIONS.some((r) => r.value === row.region) && (
+                        <option value={row.region}>{row.region}</option>
+                      )}
+                    </select>
                   </Field>
                   <Field label="Price band" htmlFor={`pmin-${row.id}`}>
                     <div className="flex items-center gap-1.5">
@@ -166,7 +198,8 @@ export default async function CoveragePage() {
 
                 <div className="flex flex-wrap items-center gap-3 border-t border-ink-100 px-5 py-2.5 text-xs">
                   <span className="text-ink-500">
-                    {formatCurrency(row.price_min)} – {formatCurrency(row.price_max)}
+                    {regionLabel(row.region)} · {formatCurrency(row.price_min)} –{" "}
+                    {formatCurrency(row.price_max)}
                   </span>
                   <span className={stale ? "text-signal-hot" : "text-ink-400"}>
                     {row.last_confirmed_at ? `Confirmed ${formatDate(row.last_confirmed_at)}` : "Never confirmed"}

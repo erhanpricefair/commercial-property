@@ -6,7 +6,7 @@ import { getMatchesForInvestor } from "@/lib/repositories/opportunities";
 import { listActivity, listNotes, listCommunications } from "@/lib/repositories/activity";
 import { listEmailTemplates } from "@/lib/email";
 import { listDealsForInvestor, getSetting } from "@/lib/repositories/deals";
-import { coverageMatchesForInvestor, coverageStats } from "@/lib/repositories/coverage";
+import { groupedCoverageForInvestor, coverageStats } from "@/lib/repositories/coverage";
 import CoverageMatches from "@/components/admin/CoverageMatches";
 import DealPanel from "@/components/admin/DealPanel";
 import { scoreLead, type ScoringInput } from "@/lib/scoring";
@@ -58,7 +58,7 @@ export default async function InvestorDetailPage({
   const templates = listEmailTemplates();
   const deals = listDealsForInvestor(investorId);
   const commissionRate = Number(getSetting("commission_rate")) || 4;
-  const coverage = coverageMatchesForInvestor(investorId);
+  const coverage = groupedCoverageForInvestor(investorId);
   const hasAnyCoverage = coverageStats().active > 0;
 
   const breakdown = prefs

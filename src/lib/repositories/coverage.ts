@@ -1,6 +1,14 @@
 import "server-only";
 import { getDb } from "../db";
-import { matchCoverage, type CoverageArea, type MatchCriteria } from "../matching";
+import {
+  matchCoverage,
+  groupCoverageMatches,
+  type CoverageArea,
+  type GroupedCoverageMatch,
+  type MatchCriteria,
+} from "../matching";
+
+export type { GroupedCoverageMatch };
 import { getInvestor } from "./investors";
 
 /**
@@ -178,6 +186,10 @@ export function coverageMatchesForInvestor(investorId: number): CoverageMatchRow
 
 export function countCoverageMatches(investorId: number): number {
   return coverageMatchesForInvestor(investorId).length;
+}
+
+export function groupedCoverageForInvestor(investorId: number): GroupedCoverageMatch[] {
+  return groupCoverageMatches(coverageMatchesForInvestor(investorId));
 }
 
 export function coverageStats(): {

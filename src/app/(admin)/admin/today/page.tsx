@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireAdminPage } from "@/lib/admin-guard";
 import { getDb } from "@/lib/db";
 import { getMatchesForInvestor } from "@/lib/repositories/opportunities";
-import { coverageMatchesForInvestor } from "@/lib/repositories/coverage";
+import { groupedCoverageForInvestor } from "@/lib/repositories/coverage";
 import { FREQUENCY_LABELS } from "@/lib/matching";
 import { getSetting } from "@/lib/repositories/deals";
 import { commissionFor, settlementSpeed } from "@/lib/revenue";
@@ -13,7 +13,7 @@ import {
   formatCurrency,
   formatDate,
 } from "@/components/admin/ui";
-import { labelFor } from "@/lib/taxonomy";
+import { labelFor, regionLabel } from "@/lib/taxonomy";
 import { logCallOutcomeAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -156,7 +156,7 @@ async function CallCard({ row, commissionRate }: { row: CallRow; commissionRate:
    * is our patch", and what is available today is a question for the channel
    * partner.
    */
-  const coverage = coverageMatchesForInvestor(row.id).slice(0, 3);
+  const coverage = groupedCoverageForInvestor(row.id).slice(0, 3);
   const matches = getMatchesForInvestor(row.id).slice(0, 3);
 
   // Indicative commission from the coverage band, so the card still shows what
@@ -235,17 +235,17 @@ async function CallCard({ row, commissionRate }: { row: CallRow; commissionRate:
             </p>
             <ul className="mt-1.5 space-y-1">
               {coverage.map((area) => (
-                <li key={area.id} className="text-xs text-ink-600">
+                <li key={area.key} className="text-xs text-ink-600">
                   <span className="font-medium text-ink-800">
                     {labelFor("propertyType", area.property_type)}
                   </span>
                   {" · "}
-                  {area.suburb || area.region || area.state}
+                  {regionLabel(area.region)}
                   {" · "}
                   {formatCurrency(area.price_min)}–{formatCurrency(area.price_max)}
-                  <span className="ml-1.5 text-ink-400">
-                    {FREQUENCY_LABELS[area.frequency] ?? area.frequency}
-                  </span>
+                  {area.suburbs.length > 0 && (
+                    <span className="block text-ink-400">{area.suburbs.slice(0, 4).join(", ")}</span>
+                  )}
                 </li>
               ))}
             </ul>

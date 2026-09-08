@@ -1,4 +1,12 @@
-import { BUDGET_RANGES, type Budget, type LocationScope, type PropertyType, type Priority } from "./taxonomy";
+import {
+  BUDGET_RANGES,
+  regionIsMetro,
+  regionLabel,
+  type Budget,
+  type LocationScope,
+  type PropertyType,
+  type Priority,
+} from "./taxonomy";
 
 /**
  * OPPORTUNITY MATCHING — admin surface only.
@@ -220,19 +228,18 @@ export type CoverageMatch = {
 };
 
 /**
- * Coverage that comes up often is worth more than coverage that rarely does —
- * but only as a tiebreaker.
+ * How often something comes up, as a bounded adjustment rather than a
+ * multiplier.
  *
- * The range here is deliberately narrow. An earlier, wider spread let a
- * frequently-available area in the wrong region outrank a rarely-available one
- * that actually matched the investor's suburb and budget, which is exactly
- * backwards: fit decides whether the call is worth making, availability only
- * decides the order you make them in.
+ * A multiplier scales with the score, so a 20% penalty on a strong match costs
+ * ~19 points — enough to swamp a genuine difference in location fit and put a
+ * metro precinct above the regional one the investor actually asked for. A
+ * fixed adjustment can nudge the order without ever overturning fit.
  */
-const FREQUENCY_WEIGHT: Record<string, number> = {
-  regular: 1,
-  occasional: 0.92,
-  rare: 0.8,
+const FREQUENCY_ADJUSTMENT: Record<string, number> = {
+  regular: 4,
+  occasional: 0,
+  rare: -6,
 };
 
 export const FREQUENCY_LABELS: Record<string, string> = {
@@ -301,14 +308,43 @@ export function scoreCoverage(criteria: MatchCriteria, area: CoverageArea): Cove
   /* Location — 25 */
   score += scoreCoverageLocation(criteria, area, reasons);
 
-  // Weight the whole thing by how often something actually comes up here.
-  const weight = FREQUENCY_WEIGHT[area.frequency] ?? 0.8;
-  const weighted = Math.round(score * weight);
-  if (weight < 1 && score > 0) {
+  // Nudge by how often something actually comes up here.
+  const adjustment = FREQUENCY_ADJUSTMENT[area.frequency] ?? 0;
+  const adjusted = score > 0 ? score + adjustment : 0;
+  if (adjustment !== 0 && score > 0) {
     reasons.push(FREQUENCY_LABELS[area.frequency] ?? "Availability varies");
   }
 
-  return { coverageId: area.id, score: Math.min(100, weighted), reasons };
+  return { coverageId: area.id, score: Math.max(0, Math.min(100, adjusted)), reasons };
+}
+
+/**
+ * Does what the investor typed describe this region?
+ *
+ * Compared on distinctive words rather than as a substring, so "northern
+ * suburbs" finds Northern Melbourne. Generic words are ignored — on their own
+ * "Melbourne" or "Victoria" describe every metro region equally and so
+ * distinguish nothing.
+ */
+const GENERIC_LOCATION_WORDS = new Set([
+  "melbourne", "victoria", "vic", "suburbs", "suburb", "area", "areas",
+  "region", "regional", "greater", "metro", "metropolitan", "and", "the",
+]);
+
+function regionMatchesText(region: string | null, freeText: string): boolean {
+  const label = regionLabel(region).toLowerCase();
+  if (label === "—") return false;
+  if (label.includes(freeText)) return true;
+
+  const distinctive = (text: string) =>
+    text
+      .split(/[^a-z]+/)
+      .filter((word) => word.length >= 3 && !GENERIC_LOCATION_WORDS.has(word));
+
+  const wanted = distinctive(freeText);
+  if (!wanted.length) return false;
+  const available = new Set(distinctive(label));
+  return wanted.some((word) => available.has(word));
 }
 
 function scoreCoverageLocation(
@@ -317,20 +353,28 @@ function scoreCoverageLocation(
   reasons: string[],
 ): number {
   const suburb = (area.suburb ?? "").toLowerCase();
-  const region = (area.region ?? "").toLowerCase();
   const state = (area.state ?? "").toUpperCase();
   const isVic = state === "VIC";
-  const inMelbourne =
-    GREATER_MELBOURNE_HINTS.some((hint) => suburb.includes(hint)) ||
-    region.includes("melbourne") ||
-    region.includes("metro");
 
+  // The recorded region is authoritative — it is a structured value chosen from
+  // a list. Only when a row has no region do we fall back to guessing from the
+  // suburb name, which is what the hint list is for.
+  const inMelbourne =
+    regionIsMetro(area.region) ?? GREATER_MELBOURNE_HINTS.some((hint) => suburb.includes(hint));
+
+  /**
+   * A suburb the investor typed themselves outranks a broad scope match.
+   *
+   * Someone who wrote "Ballarat" is telling you something more specific than
+   * someone who ticked "regional Victoria", and the ranking has to reflect
+   * that — otherwise every regional suburb ties with the one they asked for.
+   */
   const freeText = (criteria.locationFree ?? "").trim().toLowerCase();
   if (freeText.length >= 3 && suburb && (suburb.includes(freeText) || freeText.includes(suburb))) {
     reasons.push("Covers the suburb they named");
     return 25;
   }
-  if (freeText.length >= 3 && region && region.includes(freeText)) {
+  if (freeText.length >= 3 && regionMatchesText(area.region, freeText)) {
     reasons.push("Covers the area they named");
     return 23;
   }
@@ -340,31 +384,116 @@ function scoreCoverageLocation(
     case "greater_melbourne":
       if (isVic && inMelbourne) {
         reasons.push("Melbourne metropolitan coverage");
-        return 25;
+        return 21;
       }
       if (isVic) {
         reasons.push("Victorian coverage, outside the metro area");
-        return 10;
+        return 9;
       }
       return 0;
     case "regional_vic":
       if (isVic && !inMelbourne) {
         reasons.push("Regional Victorian coverage");
-        return 25;
+        return 21;
       }
-      if (isVic) return 10;
+      if (isVic) return 9;
       return 0;
     case "anywhere_vic":
       if (isVic) {
         reasons.push("Victorian coverage");
-        return 25;
+        return 21;
       }
       return 5;
     case "australia_wide":
     case "open":
       reasons.push("Investor is open on location");
-      return 18;
+      return 16;
     default:
       return 0;
   }
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Grouping                                                            */
+/* ------------------------------------------------------------------ */
+
+export type GroupableCoverage = {
+  property_type: string;
+  suburb: string | null;
+  region: string | null;
+  price_min: number | null;
+  price_max: number | null;
+  frequency: string;
+  typical_completion: string | null;
+  match_score: number;
+  reasons: string[];
+};
+
+export type GroupedCoverageMatch = {
+  key: string;
+  property_type: string;
+  region: string | null;
+  suburbs: string[];
+  price_min: number | null;
+  price_max: number | null;
+  frequency: string;
+  typical_completion: string | null;
+  match_score: number;
+  reasons: string[];
+};
+
+/**
+ * Collapse matches into one row per asset type and precinct.
+ *
+ * Coverage is recorded per suburb, so one investor legitimately matches dozens
+ * of rows — five storage suburbs across the north is five rows saying the same
+ * thing. Ungrouped that reads as noise; grouped it reads the way you would say
+ * it on a call: "storage in the northern suburbs, five areas, $180k–$320k".
+ */
+export function groupCoverageMatches<T extends GroupableCoverage>(
+  matches: T[],
+): GroupedCoverageMatch[] {
+  const groups = new Map<string, GroupedCoverageMatch>();
+
+  for (const match of matches) {
+    const key = `${match.property_type}|${match.region ?? ""}`;
+    const existing = groups.get(key);
+
+    if (!existing) {
+      groups.set(key, {
+        key,
+        property_type: match.property_type,
+        region: match.region,
+        suburbs: match.suburb ? [match.suburb] : [],
+        price_min: match.price_min,
+        price_max: match.price_max,
+        frequency: match.frequency,
+        typical_completion: match.typical_completion,
+        match_score: match.match_score,
+        reasons: [...match.reasons],
+      });
+      continue;
+    }
+
+    if (match.suburb && !existing.suburbs.includes(match.suburb)) {
+      existing.suburbs.push(match.suburb);
+    }
+    // The group is worth what its best member is worth, and spans the full
+    // band across the precinct.
+    existing.match_score = Math.max(existing.match_score, match.match_score);
+    if (match.price_min !== null) {
+      existing.price_min =
+        existing.price_min === null ? match.price_min : Math.min(existing.price_min, match.price_min);
+    }
+    if (match.price_max !== null) {
+      existing.price_max =
+        existing.price_max === null ? match.price_max : Math.max(existing.price_max, match.price_max);
+    }
+    for (const reason of match.reasons) {
+      if (!existing.reasons.includes(reason)) existing.reasons.push(reason);
+    }
+  }
+
+  return [...groups.values()].sort((a, b) => b.match_score - a.match_score);
 }

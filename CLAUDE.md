@@ -73,9 +73,16 @@ case where a partner has cleared a specific property. Nothing in the platform
 requires a row in it.
 
 Matching is band-to-band: investor budget band overlapping coverage price band.
-Fit dominates ranking; availability frequency is only a tiebreaker — a narrow
-weighting range (1 / 0.92 / 0.8) keeps a rare-but-right match ahead of a
-common-but-wrong one.
+Coverage is recorded per suburb; matches are grouped by (type, region) for
+display.
+
+Ranking: a suburb or area the investor typed outranks a scope match, which
+outranks nothing. Availability frequency is a **bounded adjustment**
+(+4 / 0 / -6), never a multiplier — a multiplier scales with the score and can
+swamp a real difference in location fit.
+
+`COVERAGE_REGIONS` in taxonomy carries an explicit `isMetro` flag. Never infer
+metro-ness by sniffing a free-text region string; it fails silently.
 
 ## Revenue model
 

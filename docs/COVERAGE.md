@@ -35,15 +35,33 @@ A test asserts those columns stay absent, so nobody can helpfully add one later.
 | Field | Example | Why |
 | --- | --- | --- |
 | Property type | Warehouse | Matches against what the investor asked for |
-| Suburb *or* area | Northern Melbourne | Suburb if you're confident, area if not |
-| State | VIC | |
+| Suburb | Truganina | The strongest matching signal |
+| Area | Western Melbourne | Chosen from a list, drives metro vs regional |
 | Price band | $420,000 – $950,000 | Band, never an exact figure |
 | How often available | Comes up occasionally | Orders your call list |
 | Typically | Completed | Drives the settlement-speed flag |
 | Notes | *Yours only* | Never shown to an investor |
 
-Five or six rows is enough to start. Matching works from the moment the first
-one exists.
+**Suburb with no address is the point.** "Warehouse, Truganina, $420k–950k" is
+market knowledge — anyone active in the western industrial market knows there
+is warehouse stock in Truganina at that sort of money. It becomes a stocklist
+only when it names a building, and there is nowhere here to put one.
+
+The area is a **structured choice**, not free text, because whether a precinct
+counts as metropolitan drives location matching. Sniffing that from a typed
+string ("Nth Melbourne", "Melb North") fails silently — an investor who asked
+for Melbourne quietly stops matching coverage that does cover them.
+
+### Adding suburbs quickly
+
+The suburbs box takes a comma- or line-separated list and creates one row per
+suburb, so a whole precinct goes in at once:
+
+```
+Truganina, Laverton North, Derrimut, Sunshine, Ravenhall
+```
+
+Five or six precincts is enough to start. Matching works from the first row.
 
 ## How matching works without stock
 
@@ -51,14 +69,25 @@ An investor states a budget **band**. Coverage states a price **band**. A match
 is an overlap. Nothing on either side is an exact price for an individual
 property, which is precisely why this works without holding a stocklist.
 
-The investor record then answers plainly: **"Can we help them? Yes — 8 coverage
-areas"**, with the reasoning shown, and a note that what's actually available
+The investor record then answers plainly: **"Can we help them? Yes — 9 areas we
+cover"**, with the reasoning shown, and a note that what's actually available
 should be checked with your partner before you present anything.
 
-Fit dominates the ranking; how often something comes up is only a tiebreaker. A
-rarely-available area that matches their suburb and budget outranks a
-frequently-available one in the wrong region — because the first is a call
-worth making and the second isn't.
+Matches are **grouped by precinct**, so five storage suburbs across the north
+read as one line rather than five near-identical ones — the way you'd say it on
+a call.
+
+Ranking, in order of weight:
+
+1. **A suburb or area they typed themselves.** Someone who wrote "Ballarat" is
+   telling you more than someone who ticked "regional Victoria". "Northern
+   suburbs" finds Northern Melbourne; "Melbourne" on its own doesn't favour any
+   metro precinct, because it describes them all equally.
+2. **Asset type and budget-band overlap.**
+3. **How often something comes up** — a bounded nudge, never enough to overturn
+   fit. A rarely-available area that matches their suburb still outranks a
+   frequently-available one in the wrong region, because the first is a call
+   worth making.
 
 ## Keeping it honest
 
@@ -76,7 +105,8 @@ credibility with people who might have been buyers later.
 npm run coverage:seed
 ```
 
-Seeds ten broad Melbourne and regional Victorian bands as a starting point.
+Seeds 38 suburb-level bands across Melbourne's established industrial and
+commercial precincts and regional Victoria, as a starting point.
 **Every row is marked `VERIFY`.** Open Admin → Coverage, correct each band to
 what you can genuinely source, and confirm it. The seed is scaffolding, not
 knowledge — it's there so the system is usable in five minutes, not so you can

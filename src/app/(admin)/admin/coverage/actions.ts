@@ -18,14 +18,29 @@ function str(formData: FormData, key: string): string | null {
   return String(formData.get(key) ?? "").trim() || null;
 }
 
+/**
+ * Add coverage for one or many suburbs at once.
+ *
+ * Coverage is usually the same asset type and price band across several
+ * suburbs in a precinct, so entering them one at a time is needless work.
+ * Paste or type a comma- or newline-separated list and this creates one row
+ * per suburb; leave it blank to record the area as a whole.
+ */
 export async function createCoverageAction(formData: FormData) {
   await requireAdmin();
   const propertyType = String(formData.get("propertyType") ?? "").trim();
   if (!propertyType) return;
 
-  createCoverage({
+  const suburbs = String(formData.get("suburbs") ?? "")
+    .split(/[,\n]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    // Same suburb twice in one paste shouldn't make two rows.
+    .filter((s, i, all) => all.findIndex((o) => o.toLowerCase() === s.toLowerCase()) === i)
+    .slice(0, 60);
+
+  const base = {
     propertyType,
-    suburb: str(formData, "suburb"),
     region: str(formData, "region"),
     state: String(formData.get("state") ?? "VIC"),
     priceMin: num(formData, "priceMin"),
@@ -35,7 +50,13 @@ export async function createCoverageAction(formData: FormData) {
     typicalCompletion: str(formData, "typicalCompletion"),
     frequency: String(formData.get("frequency") ?? "occasional"),
     notes: str(formData, "notes"),
-  });
+  };
+
+  if (suburbs.length === 0) {
+    createCoverage({ ...base, suburb: null });
+  } else {
+    for (const suburb of suburbs) createCoverage({ ...base, suburb });
+  }
 
   revalidatePath("/admin/coverage");
   revalidatePath("/admin");
