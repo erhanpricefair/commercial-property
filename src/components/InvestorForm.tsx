@@ -67,6 +67,42 @@ const INITIAL: FormState = {
 
 const TOTAL_STEPS = 7;
 
+/**
+ * A key for this browser's in-progress registration, so repeated background
+ * saves update one row rather than creating many. Random and local — it
+ * identifies the form session, not the person.
+ */
+function getSessionKey(): string {
+  if (typeof window === "undefined") return "";
+  const KEY = "cp_form_session";
+  try {
+    const existing = window.sessionStorage.getItem(KEY);
+    if (existing) return existing;
+    const created =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `s${Date.now()}${Math.random().toString(36).slice(2, 10)}`;
+    window.sessionStorage.setItem(KEY, created);
+    return created;
+  } catch {
+    return `s${Date.now()}${Math.random().toString(36).slice(2, 10)}`;
+  }
+}
+
+/** Fire-and-forget: neither of these may ever block or break the form. */
+function beacon(url: string, payload: unknown): void {
+  try {
+    void fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => undefined);
+  } catch {
+    /* ignore */
+  }
+}
+
 const STEP_TITLES = [
   "What type of commercial property are you interested in?",
   "What is your approximate budget?",
@@ -138,6 +174,12 @@ export default function InvestorForm({
     if (startedRef.current) return;
     startedRef.current = true;
     const attribution = attributionPayload(source ?? "website");
+    beacon("/api/funnel", {
+      event: "form_start",
+      step: 1,
+      source: source ?? "website",
+      landingPage: attribution.landingPage,
+    });
     trackEvent(CONVERSION_EVENTS.investorFormStart, {
       lead_source: attribution.source,
       campaign: attribution.utmCampaign,
@@ -157,10 +199,20 @@ export default function InvestorForm({
   const goNext = useCallback(() => {
     setStep((s) => {
       const next = Math.min(TOTAL_STEPS - 1, s + 1);
-      if (next !== s) trackEvent(CONVERSION_EVENTS.investorFormStep, { step: next + 1 });
+      if (next !== s) {
+        trackEvent(CONVERSION_EVENTS.investorFormStep, { step: next + 1 });
+        // Server-side too, so drop-off is visible in the admin without
+        // depending on a third-party analytics account.
+        beacon("/api/funnel", {
+          event: "form_step",
+          step: next + 1,
+          source: source ?? "website",
+          landingPage: typeof window !== "undefined" ? window.location.pathname : undefined,
+        });
+      }
       return next;
     });
-  }, []);
+  }, [source]);
 
   const goBack = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
 
@@ -193,6 +245,41 @@ export default function InvestorForm({
     [markStarted],
   );
 
+  /**
+   * Save what we have as soon as there is a usable email.
+   *
+   * The most expensive abandonment in this form is someone who answers every
+   * question and then stops at the phone field — six steps of criteria and no
+   * way to reach them. This makes that a lead rather than a loss.
+   *
+   * Only ever fires with a valid email, and the visitor is told (see the notice
+   * below the field).
+   */
+  const savePartial = useCallback(() => {
+    const email = form.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return;
+
+    const attribution = attributionPayload(source ?? "website");
+    beacon("/api/leads/partial", {
+      sessionKey: getSessionKey(),
+      email,
+      firstName: form.firstName,
+      lastName: form.lastName,
+      propertyType: form.propertyType || undefined,
+      budget: form.budget || undefined,
+      locationScope: form.locationScope || undefined,
+      locationFree: form.locationFree,
+      priorities: form.priorities,
+      financeStatus: form.financeStatus || undefined,
+      timeframe: form.timeframe || undefined,
+      lastStep: step + 1,
+      source: attribution.source,
+      landingPage: attribution.landingPage,
+      utmCampaign: attribution.utmCampaign,
+      utmSource: attribution.utmSource,
+    });
+  }, [form, source, step]);
+
   const validateFinalStep = useCallback((): boolean => {
     const next: Record<string, string> = {};
     if (!form.firstName.trim()) next.firstName = "Please enter your first name";
@@ -221,6 +308,7 @@ export default function InvestorForm({
           body: JSON.stringify({
             ...form,
             ...attributionPayload(source ?? "website"),
+            sessionKey: getSessionKey(),
           }),
         });
 
@@ -245,6 +333,12 @@ export default function InvestorForm({
         }
 
         const attribution = attributionPayload(source ?? "website");
+        beacon("/api/funnel", {
+          event: "form_complete",
+          step: TOTAL_STEPS,
+          source: attribution.source,
+          landingPage: attribution.landingPage,
+        });
         trackEvent(CONVERSION_EVENTS.investorFormComplete, {
           lead_source: attribution.source,
           campaign: attribution.utmCampaign,
@@ -414,7 +508,13 @@ export default function InvestorForm({
             ))}
 
           {step === 6 && (
-            <ContactStep form={form} set={set} errors={errors} markStarted={markStarted} />
+            <ContactStep
+              form={form}
+              set={set}
+              errors={errors}
+              markStarted={markStarted}
+              onEmailEntered={savePartial}
+            />
           )}
 
           {errors.priorities && step === 3 && <p className="field-error">{errors.priorities}</p>}
@@ -516,11 +616,13 @@ function ContactStep({
   set,
   errors,
   markStarted,
+  onEmailEntered,
 }: {
   form: FormState;
   set: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
   errors: Record<string, string>;
   markStarted: () => void;
+  onEmailEntered: () => void;
 }) {
   return (
     <div className="space-y-5">
@@ -574,10 +676,15 @@ function ContactStep({
           className="field-input"
           value={form.email}
           onChange={(e) => set("email", e.target.value)}
+          onBlur={onEmailEntered}
           aria-invalid={Boolean(errors.email)}
-          aria-describedby={errors.email ? "email-error" : undefined}
+          aria-describedby={errors.email ? "email-error email-note" : "email-note"}
         />
         {errors.email && <p id="email-error" className="field-error">{errors.email}</p>}
+        {/* Disclosed at the point of collection, not buried in the policy. */}
+        <p id="email-note" className="mt-1.5 text-xs text-ink-400">
+          We save your progress from here, so you can finish later if you get interrupted.
+        </p>
       </div>
 
       <div>

@@ -290,6 +290,24 @@ conversions.
 
 ---
 
+## The funnel
+
+The site's job is registrations, so the form is on every page a visitor can
+land on — homepage, SEO pages, articles and campaign pages — rather than
+behind a link. Pages that have already established intent (a warehouse page, an
+under-$500k page) pre-answer that question so nobody is asked it twice.
+
+**Partial capture.** The most expensive abandonment is someone who answers six
+questions and stops at the phone field: full criteria, no way to reach them.
+Once a valid email is entered the answers so far are saved, and those
+near-misses appear in **Admin → Funnel** as the warmest leads you aren't
+calling. The form says so at the point of collection and the privacy policy
+covers it.
+
+**Drop-off report.** Admin → Funnel shows per-step drop-off and completion by
+source, counted server-side — so you can see which question loses people
+without depending on a third-party analytics account being correctly set up.
+
 ## Paid social campaigns
 
 Four dedicated landing pages at `/lp/<slug>` for Instagram and Facebook

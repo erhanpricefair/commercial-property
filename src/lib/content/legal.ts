@@ -29,6 +29,13 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     ],
   },
   {
+    heading: "Information saved before you finish",
+    paragraphs: [
+      "Our registration form saves your progress once you have entered a valid email address, so that you can return and complete it later if you are interrupted. This means we may hold the details you have entered even if you do not submit the form.",
+      "We use that information only to follow up with you about the registration you started. You can ask us to delete it at any time by contacting us, and we remove unfinished registrations that have had no activity for 90 days.",
+    ],
+  },
+  {
     heading: "How we use your information",
     paragraphs: ["We use the information you provide to:"],
     bullets: [

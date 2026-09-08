@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Breadcrumbs, CtaBand, Disclaimer, Section, SectionHeading } from "@/components/ui";
 import CtaLink from "@/components/CtaLink";
+import InlineForm from "@/components/InlineForm";
 import {
   CommercialArt,
   IndustrialArt,
@@ -98,9 +99,9 @@ export default async function LandingPageRoute({
               <h1 className="mt-4 font-display text-display-xl text-ink-900">{page.h1}</h1>
               <p className="mt-6 max-w-xl text-lg leading-[1.65] text-ink-600">{page.intro}</p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <CtaLink href="/register" location={`seo_${page.slug}_hero`}>
+                <a href="#register" className="btn-primary">
                   See Current Opportunities
-                </CtaLink>
+                </a>
                 <Link href="/how-it-works" className="btn-secondary">
                   How It Works
                 </Link>
@@ -142,23 +143,14 @@ export default async function LandingPageRoute({
             </article>
 
             <aside className="lg:sticky lg:top-28 lg:h-fit">
-              <div className="rounded-2xl border border-ink-100 bg-canvas-sunken p-6">
-                <p className="eyebrow">Investor Access</p>
-                <p className="mt-3 text-[0.9375rem] font-semibold leading-snug text-ink-900">
-                  Tell us what you&rsquo;re looking for
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-ink-600">
-                  Register your budget, location and property type and we&rsquo;ll identify
-                  opportunities that may suit.
-                </p>
-                <CtaLink
-                  href="/register"
-                  location={`seo_${page.slug}_sidebar`}
-                  className="btn-primary mt-5 w-full !min-h-[2.75rem] text-sm"
-                >
-                  Register for Investor Access
-                </CtaLink>
-              </div>
+              {/* The page has already established what they want — asking them
+                  to click through to a form to say it again loses people. */}
+              <InlineForm
+                source={`seo:${page.slug}`}
+                prefill={page.prefill}
+                heading="See what may suit"
+                subheading="About two minutes. No obligation."
+              />
 
               <div className="mt-6 rounded-2xl border border-ink-100 p-6">
                 <p className="eyebrow">Related</p>

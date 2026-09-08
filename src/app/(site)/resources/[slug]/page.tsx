@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/ui";
 import CtaLink from "@/components/CtaLink";
+import InlineForm from "@/components/InlineForm";
 import { ARTICLES, getArticle } from "@/lib/content/articles";
 import { SITE } from "@/lib/site";
 
@@ -148,31 +149,28 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             })}
           </article>
 
-          {/* Every article closes with the same conversion prompt. */}
-          <section className="mt-14 rounded-2xl border border-ink-100 bg-ink-900 p-7 text-canvas sm:p-9">
-            <h2 className="font-display text-display-sm text-canvas">
-              Looking for commercial property opportunities?
-            </h2>
-            <p className="mt-3 max-w-xl text-[0.9375rem] leading-relaxed text-ink-200">
-              Register your investment criteria and we&rsquo;ll identify commercial property
-              opportunities that may suit your budget, location and objectives. There is no
-              obligation to purchase.
+          {/* Every article closes with the form itself, not a link to it —
+              someone who read to the end is as warm as they will get. */}
+          <section className="mt-14 rounded-2xl border border-ink-100 bg-canvas-sunken p-6 sm:p-8">
+            <p className="eyebrow">Looking for commercial property opportunities?</p>
+            <p className="mt-3 max-w-xl text-[0.9375rem] leading-relaxed text-ink-600">
+              Register your criteria and we&rsquo;ll identify opportunities that may suit your
+              budget, location and objectives. No obligation to purchase.
             </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <CtaLink
-                href="/register"
-                location={`article_${article.slug}`}
-                className="btn-brass"
-              >
-                Register for Investor Access
-              </CtaLink>
-              <Link
-                href="/guide"
-                className="btn border border-ink-600 text-canvas hover:bg-ink-800"
-              >
-                Get the investor guide
-              </Link>
+            <div className="mt-7">
+              <InlineForm
+                source={`article:${article.slug}`}
+                heading="Tell us what you're looking for"
+                subheading="About two minutes."
+              />
             </div>
+            <p className="mt-5 text-sm text-ink-500">
+              Not ready?{" "}
+              <Link href="/guide" className="font-semibold text-ink-900 underline underline-offset-4">
+                Get the investor starter guide
+              </Link>{" "}
+              instead.
+            </p>
           </section>
 
           <section className="mt-14">

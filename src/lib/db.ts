@@ -97,6 +97,62 @@ export function migrate(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_investors_created ON investors(created_at);
     CREATE INDEX IF NOT EXISTS idx_investors_score ON investors(lead_score);
 
+    /* ---------------- Partial registrations ----------------
+       Someone who answers six questions and then stalls on the phone field has
+       told us everything except how to reach them. Capturing the email as soon
+       as it is validly entered turns that from a total loss into a workable
+       lead.
+
+       Collected transparently: the form says progress is being saved, and the
+       privacy policy covers it. promoted_investor_id is set when the same
+       session goes on to finish, so the same person is never worked twice.
+    ------------------------------------------------------------- */
+
+    CREATE TABLE IF NOT EXISTS partial_registrations (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_key    TEXT NOT NULL UNIQUE,
+      email          TEXT,
+      first_name     TEXT,
+      last_name      TEXT,
+      mobile         TEXT,
+      property_type  TEXT,
+      budget         TEXT,
+      location_scope TEXT,
+      location_free  TEXT,
+      priorities     TEXT NOT NULL DEFAULT '[]',
+      finance_status TEXT,
+      timeframe      TEXT,
+      last_step      INTEGER NOT NULL DEFAULT 0,
+      source         TEXT,
+      landing_page   TEXT,
+      utm_campaign   TEXT,
+      utm_source     TEXT,
+      promoted_investor_id INTEGER REFERENCES investors(id) ON DELETE SET NULL,
+      created_at     TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_partial_email ON partial_registrations(email);
+    CREATE INDEX IF NOT EXISTS idx_partial_promoted ON partial_registrations(promoted_investor_id);
+    CREATE INDEX IF NOT EXISTS idx_partial_created ON partial_registrations(created_at);
+
+    /* ---------------- Funnel events ----------------
+       Server-side counts of what happened on the public site, so drop-off can
+       be seen in the admin without depending on a third-party analytics
+       account. Aggregate only — no personal information, no cookies.
+    ------------------------------------------------------------- */
+
+    CREATE TABLE IF NOT EXISTS funnel_events (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      event       TEXT NOT NULL,
+      step        INTEGER,
+      source      TEXT,
+      landing_page TEXT,
+      day         TEXT NOT NULL DEFAULT (date('now')),
+      created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_funnel_event ON funnel_events(event);
+    CREATE INDEX IF NOT EXISTS idx_funnel_day ON funnel_events(day);
+
     /* ---------------- Investor criteria ---------------- */
 
     CREATE TABLE IF NOT EXISTS investor_preferences (

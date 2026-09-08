@@ -5,6 +5,7 @@ import { logActivity } from "../repositories/activity";
 import { queueRegistrationSequence, baseMergeVars } from "../email";
 import { dispatchLeadEvent } from "../integrations";
 import { notifyOwnerOfHotLead } from "../alerts";
+import { promotePartial } from "../repositories/funnel";
 import { labelFor, type LeadClassification } from "../taxonomy";
 import type { LeadInput } from "../validation";
 
@@ -34,6 +35,16 @@ export function registerInvestor(input: LeadInput): IntakeResult {
   const existing = findInvestorByEmail(input.email);
 
   const { investorId, classification } = createInvestor(input);
+
+  // The same person shouldn't appear as both a completed registration and an
+  // unfinished one to chase.
+  if (input.sessionKey) {
+    try {
+      promotePartial(input.sessionKey, investorId);
+    } catch {
+      /* never fail a registration over bookkeeping */
+    }
+  }
 
   logActivity(investorId, "investor_registered", "Investor registered via the qualification form", {
     source: input.source ?? "website",

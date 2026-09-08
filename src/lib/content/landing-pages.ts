@@ -1,3 +1,4 @@
+import type { Budget, LocationScope, PropertyType } from "../taxonomy";
 /**
  * SEO landing pages — one entry per intent-targeted URL.
  *
@@ -14,6 +15,12 @@ export type FaqItem = { q: string; a: string };
 
 export type LandingPage = {
   slug: string;
+  /**
+   * Pre-answers the question this page has already established. Someone
+   * reading about warehouse investment should not be asked, on that page,
+   * what asset type they are interested in.
+   */
+  prefill?: { propertyType?: PropertyType; budget?: Budget; locationScope?: LocationScope };
   art: "warehouse" | "industrial" | "storage" | "commercial" | "streetscape";
   eyebrow: string;
   h1: string;
@@ -29,6 +36,7 @@ export type LandingPage = {
 export const LANDING_PAGES: LandingPage[] = [
   {
     slug: "commercial-property-investment-melbourne",
+    prefill: { locationScope: "melbourne" },
     art: "streetscape",
     eyebrow: "Melbourne",
     h1: "Commercial Property Investment in Melbourne",
@@ -90,6 +98,7 @@ export const LANDING_PAGES: LandingPage[] = [
   },
   {
     slug: "commercial-property-under-500k",
+    prefill: { budget: "300k_500k" },
     art: "commercial",
     eyebrow: "Entry Price",
     h1: "Commercial Property Investment Opportunities Under $500,000",
@@ -153,6 +162,7 @@ export const LANDING_PAGES: LandingPage[] = [
   },
   {
     slug: "warehouse-investment-melbourne",
+    prefill: { propertyType: "warehouse", locationScope: "melbourne" },
     art: "warehouse",
     eyebrow: "Warehouse",
     h1: "Warehouse Investment in Melbourne",
@@ -217,6 +227,7 @@ export const LANDING_PAGES: LandingPage[] = [
   },
   {
     slug: "industrial-property-investment-melbourne",
+    prefill: { propertyType: "industrial", locationScope: "melbourne" },
     art: "industrial",
     eyebrow: "Industrial",
     h1: "Industrial Property Investment in Melbourne",
@@ -276,6 +287,7 @@ export const LANDING_PAGES: LandingPage[] = [
   },
   {
     slug: "storage-property-investment",
+    prefill: { propertyType: "storage" },
     art: "storage",
     eyebrow: "Storage",
     h1: "Storage Property Investment Explained",
@@ -340,6 +352,7 @@ export const LANDING_PAGES: LandingPage[] = [
   },
   {
     slug: "small-commercial-property-investment",
+    prefill: { propertyType: "small_commercial" },
     art: "commercial",
     eyebrow: "Small Commercial",
     h1: "Small Commercial Property Investment",
@@ -459,6 +472,7 @@ export const LANDING_PAGES: LandingPage[] = [
   },
   {
     slug: "commercial-property-melbourne",
+    prefill: { locationScope: "melbourne" },
     art: "streetscape",
     eyebrow: "Melbourne",
     h1: "Commercial Property in Melbourne: An Investor's Overview",

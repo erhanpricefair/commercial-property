@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Section, SectionHeading, CheckList, Disclaimer } from "@/components/ui";
 import CtaLink from "@/components/CtaLink";
+import InlineForm from "@/components/InlineForm";
 import {
   BlueprintPattern,
   CommercialArt,
@@ -71,7 +72,7 @@ export default function HomePage() {
       <section className="relative overflow-hidden border-b border-ink-100 bg-canvas">
         <BlueprintPattern className="pointer-events-none absolute inset-0 h-full w-full text-ink-100/30 sm:text-ink-100/70" />
         <div className="container-page relative py-16 sm:py-24 lg:py-28">
-          <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-16">
             <div className="animate-fade-up">
               <p className="eyebrow">
                 Private Investor Access
@@ -86,9 +87,9 @@ export default function HomePage() {
               </p>
 
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <CtaLink href="/register" location="hero_primary">
+                <a href="#register" className="btn-primary">
                   See Current Opportunities
-                </CtaLink>
+                </a>
                 <Link href="/how-it-works" className="btn-secondary">
                   How It Works
                 </Link>
@@ -108,18 +109,15 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="relative">
-              <div className="overflow-hidden rounded-2xl border border-ink-100 shadow-lift">
-                <StreetscapeArt className="h-full w-full" />
-              </div>
-              <div className="absolute -bottom-6 -left-4 hidden max-w-[15rem] rounded-xl border border-ink-100 bg-canvas-raised p-4 shadow-card sm:block lg:-left-8">
-                <p className="text-xs font-semibold uppercase tracking-wider text-brass-600">
-                  Investor-led
-                </p>
-                <p className="mt-1.5 text-sm leading-snug text-ink-600">
-                  You tell us what you&rsquo;re looking for. We identify what may fit.
-                </p>
-              </div>
+            {/* The form is the page's job. It sits beside the promise on
+                desktop and directly beneath it on mobile — no click in
+                between. */}
+            <div className="lg:sticky lg:top-24">
+              <InlineForm
+                source="homepage_hero"
+                heading="Tell us what you're looking for"
+                subheading="Six quick taps, then your details. About two minutes, no obligation."
+              />
             </div>
           </div>
         </div>

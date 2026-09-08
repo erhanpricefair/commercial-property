@@ -84,6 +84,22 @@ swamp a real difference in location fit.
 `COVERAGE_REGIONS` in taxonomy carries an explicit `isMetro` flag. Never infer
 metro-ness by sniffing a free-text region string; it fails silently.
 
+## The funnel is the point
+
+The public site exists to capture registrations. Every page a visitor can land
+on carries the form itself (`InlineForm`), not a link to it — a link to
+`/register` is a click some proportion of people don't make.
+
+- `src/lib/funnel.ts` — pure drop-off arithmetic, asserted in tests. A funnel
+  report that is quietly wrong sends you off fixing the wrong screen.
+- Partial registrations save once a **valid email** exists, never before. The
+  form discloses it at the point of collection and the privacy policy covers
+  it; do not move the save earlier or remove the notice.
+- `promotePartial()` links a completed registration back to its partial, so one
+  person is never worked as two leads.
+- Landing pages carry a `prefill` so a page that has already established intent
+  doesn't ask for it again.
+
 ## Revenue model
 
 - `src/lib/revenue.ts` — pure forecasting. Stage probabilities are exported and

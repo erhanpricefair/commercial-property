@@ -55,6 +55,8 @@ export const leadSchema = z.object({
   source: z.string().trim().max(80).optional(),
   sourceDetail: z.string().trim().max(200).optional(),
   landingPage: z.string().trim().max(300).optional(),
+  /** Links this submission to any partial saved earlier in the same session. */
+  sessionKey: z.string().trim().max(64).optional(),
   ...attributionFields,
   /** Honeypot — must stay empty. Bots fill it in. */
   company: z.string().max(0).optional().or(z.literal("")),
