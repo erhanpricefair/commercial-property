@@ -34,7 +34,14 @@ what — if anything — to show them.
 
 ---
 
-## Quick start
+## Not a developer?
+
+Start with **[`docs/GO-LIVE.md`](docs/GO-LIVE.md)** — it explains where commands
+run, and gives three ways to get the site live including handing it to someone
+else. Creating your login and adding coverage both happen in the browser; you
+only need a terminal (or a developer) once, for the initial deploy.
+
+## Quick start (for developers)
 
 ```bash
 npm install

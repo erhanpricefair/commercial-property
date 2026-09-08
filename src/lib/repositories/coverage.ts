@@ -10,6 +10,7 @@ import {
 
 export type { GroupedCoverageMatch };
 import { getInvestor } from "./investors";
+import { STARTER_COVERAGE } from "../content/starter-coverage";
 
 /**
  * COVERAGE AREAS — what we can source, at market level.
@@ -190,6 +191,38 @@ export function countCoverageMatches(investorId: number): number {
 
 export function groupedCoverageForInvestor(investorId: number): GroupedCoverageMatch[] {
   return groupCoverageMatches(coverageMatchesForInvestor(investorId));
+}
+
+/**
+ * Add the starter bands. Refuses if any coverage already exists, so it can
+ * never quietly duplicate or overwrite work someone has done by hand.
+ */
+export function seedStarterCoverage(): { created: number; skipped: boolean } {
+  const db = getDb();
+  const existing = (db.prepare("SELECT COUNT(*) AS c FROM coverage_areas").get() as { c: number }).c;
+  if (existing > 0) return { created: 0, skipped: true };
+
+  let created = 0;
+  const run = db.transaction(() => {
+    for (const seed of STARTER_COVERAGE) {
+      for (const suburb of seed.suburbs) {
+        createCoverage({
+          propertyType: seed.propertyType,
+          suburb,
+          region: seed.region,
+          state: "VIC",
+          priceMin: seed.priceMin,
+          priceMax: seed.priceMax,
+          frequency: seed.frequency,
+          typicalCompletion: seed.typicalCompletion,
+          notes: "VERIFY: confirm this suburb and band against what you can actually source",
+        });
+        created++;
+      }
+    }
+  });
+  run();
+  return { created, skipped: false };
 }
 
 export function coverageStats(): {

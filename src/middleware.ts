@@ -22,7 +22,9 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/admin")) {
-    const isLogin = pathname === "/admin/login";
+    // Setup is reachable without a session by design — it is what creates the
+    // first account. The page itself redirects away once one exists.
+    const isLogin = pathname === "/admin/login" || pathname === "/admin/setup";
     const hasCookie = Boolean(request.cookies.get(SESSION_COOKIE)?.value);
 
     if (!hasCookie && !isLogin) {

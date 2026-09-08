@@ -119,6 +119,16 @@ describe("public surface cannot reach private data", () => {
       const source = readCode(file);
       // The login page is deliberately reachable without a session.
       if (file.includes(`admin${path.sep}login`)) continue;
+      // Setup is reachable without a session by necessity — it is what creates
+      // the first account. It carries its own guard instead, and closes
+      // permanently once used.
+      if (file.includes(`admin${path.sep}setup`)) {
+        assert.ok(
+          source.includes("needsSetup()"),
+          "the setup page must guard itself with needsSetup()",
+        );
+        continue;
+      }
       if (!source.includes("requireAdminPage")) {
         unguarded.push(path.relative(process.cwd(), file));
       }
@@ -132,6 +142,17 @@ describe("public surface cannot reach private data", () => {
 
     for (const file of actionFiles) {
       const source = readCode(file);
+
+      // The setup action cannot require an admin — it is what creates the
+      // first one. It must refuse once any account exists instead.
+      if (file.includes(`admin${path.sep}setup`)) {
+        assert.ok(
+          source.includes("needsSetup()"),
+          "the setup action must refuse once an admin account exists",
+        );
+        continue;
+      }
+
       const exported = source.match(/export async function (\w+)/g) ?? [];
       assert.ok(exported.length > 0, `${file} exports no actions`);
       // Each action body must call requireAdmin before doing anything else.
@@ -272,5 +293,44 @@ describe("public copy stays generic", () => {
       }
     }
     assert.deepEqual(offenders, [], `private field referenced in public content:\n${offenders.join("\n")}`);
+  });
+});
+
+describe("first-run setup is closed once an account exists", () => {
+  const setup = fs.readFileSync(path.join(SRC, "lib/setup.ts"), "utf8");
+
+  test("the guard is server-side and re-checked inside the action", () => {
+    // The page render and the form submission are separate requests: checking
+    // only at render would leave a window where a second account could be
+    // created after the first.
+    const action = fs.readFileSync(
+      path.join(SRC, "app/(admin)/admin/setup/actions.ts"),
+      "utf8",
+    );
+    assert.ok(action.includes("needsSetup()"), "the action must re-check before creating");
+    assert.ok(setup.includes("if (!needsSetup())"), "completeSetup must re-check too");
+  });
+
+  test("counts only active admins", () => {
+    assert.ok(
+      setup.includes("is_active = 1"),
+      "a deactivated account must not hold setup open or closed incorrectly",
+    );
+  });
+
+  test("compares the setup token in constant time", () => {
+    assert.ok(setup.includes("timingSafeEqual"), "token comparison must not leak length or content");
+  });
+
+  test("the setup page is excluded from indexing", () => {
+    const page = fs.readFileSync(path.join(SRC, "app/(admin)/admin/setup/page.tsx"), "utf8");
+    assert.ok(page.includes("index: false"));
+  });
+
+  test("middleware lets setup through but nothing else unauthenticated", () => {
+    const middleware = fs.readFileSync(path.join(SRC, "middleware.ts"), "utf8");
+    assert.ok(middleware.includes('pathname === "/admin/setup"'));
+    // Still redirects everything else without a cookie.
+    assert.ok(middleware.includes("!hasCookie && !isLogin"));
   });
 });

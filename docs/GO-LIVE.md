@@ -1,149 +1,174 @@
-# Go live
+# Getting the site live
 
-Nothing in this repository earns anything until it is on a domain taking
-registrations. This is the shortest path there.
+## First: where do you run commands?
 
-Budget about 30 minutes for steps 1–5.
+Fair question, and I should have answered it earlier. Commands like
+`npm run coverage:seed` are **terminal commands** — they run on a computer with
+the project's code on it, or inside your hosting provider's console. They are
+not something you type into a browser.
+
+**The good news: you no longer need a terminal for the things you'd actually
+do day to day.** Creating your login and adding your coverage both happen in
+the browser now. You need a terminal (or someone with one) exactly once: to
+get the site onto the internet the first time.
+
+Three honest options for that one step:
+
+| Option | Effort | Cost | Best if |
+| --- | --- | --- | --- |
+| **Pay a developer** | You send a link, they do it | ~1–2 hours of their time | You'd rather not touch this at all |
+| **Railway's website** | ~30 min, mostly clicking | ~US$5–10/month | You're comfortable following steps |
+| **Terminal (Fly.io)** | ~30 min, typing commands | ~US$5/month | You've used a terminal before |
+
+If you go the developer route, send them this file and `fly.toml` — it'll take
+them less time than reading the brief.
 
 ---
 
-## 1. Choose hosting that keeps your data
+## Option A: hand it to a developer
 
-**The lead database is the business.** It is SQLite, on disk.
+Send them:
 
-> On Vercel, Netlify, Cloud Run and most serverless platforms the filesystem is
-> ephemeral. Every deploy would silently destroy every lead you had collected.
-> Do not deploy there without first migrating to Postgres.
+> The repo is `erhanpricefair/commercial-property`, branch
+> `claude/commercial-property-leads-mfm0zn`. It's a Next.js app with SQLite on
+> a persistent volume. `Dockerfile` and `fly.toml` are ready to go. **The
+> filesystem must persist** — it holds the lead database — so not Vercel
+> unless you migrate to Postgres first. Once it's up and the domain points at
+> it, I'll do the rest through the admin.
 
-Anything with a persistent volume works as-is: Fly.io, Railway, Render with a
-disk, a VPS, or any container host with a mount. `fly.toml` in the repo is
-configured for Fly with a Sydney region and a 1GB volume.
+Ask them to give you the live URL and confirm `/api/health` returns `ok: true`.
 
-## 2. Deploy
+---
+
+## Option B: Railway, through their website
+
+Railway builds straight from GitHub with no terminal.
+
+**1. Sign up** at railway.app and connect your GitHub account.
+
+**2. New Project → Deploy from GitHub repo.** Pick
+`erhanpricefair/commercial-property`, and set the branch to
+`claude/commercial-property-leads-mfm0zn`.
+
+**3. Add a volume.** In the service, go to **Variables → Volumes → New Volume**
+and set the mount path to `/data`.
+
+> This is the step you cannot skip. The volume is where the lead database
+> lives. Without it, every redeploy wipes every lead you've collected.
+
+**4. Set your variables.** In **Variables**, add:
+
+| Variable | Value |
+| --- | --- |
+| `DATABASE_PATH` | `/data/platform.db` |
+| `NEXT_PUBLIC_SITE_URL` | `https://yourdomain.com.au` |
+| `NEXT_PUBLIC_SITE_NAME` | Your business name |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | Your contact email |
+| `OWNER_ALERT_EMAIL` | Where hot-lead alerts should land |
+| `ADMIN_SETUP_TOKEN` | Any long random phrase you invent |
+
+`ADMIN_SETUP_TOKEN` is a password you'll type once when creating your login.
+Setting it means nobody else can claim the account in the minutes after you
+deploy. Invent something long and keep it handy.
+
+**5. Add your domain.** Settings → Networking → Custom Domain, then add the DNS
+record Railway shows you at your domain registrar. Wait for HTTPS to go green
+before doing anything else — the admin won't log in over plain HTTP.
+
+**6. Done.** Everything from here happens in the browser.
+
+---
+
+## Option C: Fly.io, with a terminal
+
+You'll need [Node.js](https://nodejs.org) and the
+[Fly CLI](https://fly.io/docs/flyctl/install/) installed.
 
 ```bash
-# Edit fly.toml first: set app name and the NEXT_PUBLIC_* build args to your
-# real domain. Public config is inlined at build time, so getting it right
-# before the first build saves rebuilding.
+git clone https://github.com/erhanpricefair/commercial-property.git
+cd commercial-property
+git checkout claude/commercial-property-leads-mfm0zn
 
+# Edit fly.toml: set the app name and NEXT_PUBLIC_* build args first
 fly launch --no-deploy --copy-config
 fly volumes create data --size 1 --region syd
+fly secrets set OWNER_ALERT_EMAIL=you@yourdomain.com.au ADMIN_SETUP_TOKEN="a long random phrase"
 fly deploy
 ```
 
-Confirm it came up healthy:
+---
 
-```bash
-curl https://your-app.fly.dev/api/health
-# {"ok":true,"database":"connected","investors":0,...}
-```
+## Then, all in your browser
 
-## 3. Create your admin account
+**1. Create your login.** Visit `https://yourdomain.com.au/admin`. It sends you
+to a setup page. Enter your name, email and a password (plus the setup key if
+you set one). **Do this immediately after deploying** — the page closes forever
+the moment you submit.
 
-```bash
-fly ssh console -c "npm run admin:create -- you@yourdomain.com.au 'Your Name'"
-```
+**2. Add your coverage.** Admin → Coverage. Either add your own areas, or press
+**Add starter areas** for a set covering Melbourne's main industrial and
+commercial precincts, then correct them. Every one is marked `VERIFY` until you
+confirm it. Budget fifteen minutes; it's the difference between a call list you
+trust and one you don't.
 
-It prints a generated password once. Store it in your password manager.
+**3. Set your target.** Admin → Settings. Your revenue target and commission
+rate, so the dashboard can tell you where you stand.
 
-**If you seeded a demo database, delete the seeded admin now** — it has a
-publicly known password.
+**4. Test it yourself.** Open your own site, register as if you were an
+investor, and check that:
 
-## 4. Point your domain
+- the lead appears in Admin → Investors
+- the alert email reaches you
+- the coverage matches look right
 
-Add the domain in your host, then create the DNS records it gives you. Confirm
-HTTPS works before running any ads — session cookies are `secure` in
-production, and the admin will not log in over plain HTTP.
-
-## 5. Set your secrets
-
-```bash
-fly secrets set \
-  EMAIL_PROVIDER=resend \
-  RESEND_API_KEY=... \
-  EMAIL_FROM="Commercial Investor Access <invest@yourdomain.com.au>" \
-  OWNER_ALERT_EMAIL=you@yourdomain.com.au
-```
-
-`OWNER_ALERT_EMAIL` is the one that matters most on day one: it is what pings
-you the moment a HOT lead registers, with their number as a tap-to-call link.
-
-Optional but worth doing before spending on ads:
-
-```bash
-fly secrets set \
-  NEXT_PUBLIC_META_PIXEL_ID=... \
-  NEXT_PUBLIC_GA_MEASUREMENT_ID=... \
-  SLACK_WEBHOOK_URL=...
-```
-
-Note the `NEXT_PUBLIC_*` values are inlined at **build** time — set them as
-build args in `fly.toml` and redeploy, not just as runtime secrets.
-
-## 6. Record your coverage
-
-Matching needs to know what you can source. It does **not** need your partner's
-stocklist — see [`COVERAGE.md`](COVERAGE.md) for why that distinction matters.
-
-```bash
-fly ssh console -c "npm run coverage:seed"
-```
-
-That seeds ten broad Victorian bands, every one marked `VERIFY`. Then open
-**Admin → Coverage** and correct each band to what you can genuinely source.
-Takes about ten minutes and it is the difference between a call list you can
-trust and one you can't.
-
-## 7. Schedule the follow-up dispatcher
-
-Queued emails only send when something drains the queue.
-
-```bash
-fly ssh console -c "npm run email:dispatch"   # test it once by hand
-```
-
-Then run it every 15 minutes — a Fly scheduled machine, a cron job, or an
-external scheduler hitting a small endpoint you add. Without this, nobody
-receives the welcome email.
-
-## 8. Back up the database
-
-```bash
-fly ssh sftp get /data/platform.db ./backup-$(date +%F).db
-```
-
-Do this on a schedule. Losing the volume means losing every lead, every note
-and every deal.
+If all three work, you're live.
 
 ---
 
-## Pre-flight checklist
+## Two things that still need a schedule
 
-Run this before you spend a dollar on traffic:
+Neither is urgent on day one, but the follow-up emails won't send without the
+first.
 
-```bash
+**Follow-up emails.** Queued messages need something to send them every 15
+minutes or so. On Railway: add a **Cron** service running
+`npm run email:dispatch`. On Fly: a scheduled machine. Ask whoever set up the
+deploy — it's a five-minute job.
+
+**Backups.** The database is your entire lead pipeline. Railway volumes can be
+backed up from their dashboard; on Fly use
+`fly ssh sftp get /data/platform.db`. Set a reminder if nothing automatic.
+
+---
+
+## Before you spend money on ads
+
+```
 npm run audit:privacy -- https://yourdomain.com.au
 ```
 
-It should report 0 failures. Then check by hand:
+That's a terminal command — ask whoever deployed it to run it, or skip it and
+check by hand:
 
-- [ ] `/api/health` returns `ok: true`
-- [ ] Registering on your live site produces a lead in `/admin/investors`
-- [ ] You received the HOT lead alert email
-- [ ] The welcome email arrived after running the dispatcher
-- [ ] `/admin` redirects to login when signed out
-- [ ] Your coverage areas are recorded and verified (not left as `VERIFY`)
-- [ ] A test investor shows coverage matches that look right to you
-- [ ] The database is backed up somewhere off the host
+- [ ] `yourdomain.com.au/api/health` shows `ok: true`
+- [ ] Registering on your live site creates a lead in the admin
+- [ ] The hot-lead alert reached your inbox
+- [ ] Signing out and visiting `/admin` sends you to the login page
+- [ ] Your coverage is verified, not left on the seeded defaults
+- [ ] The database is backed up somewhere other than the host
 
 ---
 
-## Moving to Postgres later
+## If something's wrong
 
-All SQL is plain and confined to `src/lib/db.ts` and `src/lib/repositories/`.
-Swap the driver, port the schema (`AUTOINCREMENT` → `IDENTITY`,
-`datetime('now')` → `now()`), adapt the repository functions. Nothing else in
-the application touches the database.
+**Site won't load** — check the deploy logs in Railway/Fly for a red error.
 
-Worth doing when you have more than one person in the admin at once, or when
-you want managed backups more than you want simplicity.
+**Admin won't log in** — confirm the address starts `https://`, not `http://`.
+
+**Leads disappeared after a deploy** — the volume isn't mounted at `/data`, or
+`DATABASE_PATH` isn't set to `/data/platform.db`. Fix both, and treat anything
+collected before now as lost.
+
+**Setup page says an account already exists** — it's been used. Sign in at
+`/admin/login`, or reset the password from a terminal with
+`npm run admin:create`.

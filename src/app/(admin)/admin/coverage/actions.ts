@@ -7,6 +7,7 @@ import {
   updateCoverage,
   deleteCoverage,
   confirmCoverage,
+  seedStarterCoverage,
 } from "@/lib/repositories/coverage";
 
 function num(formData: FormData, key: string): number | null {
@@ -96,6 +97,14 @@ export async function deleteCoverageAction(formData: FormData) {
   const id = Number(formData.get("id"));
   if (!id) return;
   deleteCoverage(id);
+  revalidatePath("/admin/coverage");
+  revalidatePath("/admin");
+}
+
+/** Adds the starter bands from the admin, so this needs no terminal. */
+export async function seedStarterCoverageAction() {
+  await requireAdmin();
+  seedStarterCoverage();
   revalidatePath("/admin/coverage");
   revalidatePath("/admin");
 }

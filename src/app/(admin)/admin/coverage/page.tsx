@@ -16,7 +16,9 @@ import {
   updateCoverageAction,
   confirmCoverageAction,
   deleteCoverageAction,
+  seedStarterCoverageAction,
 } from "./actions";
+import { STARTER_COVERAGE_COUNT } from "@/lib/content/starter-coverage";
 
 export const dynamic = "force-dynamic";
 
@@ -137,8 +139,18 @@ export default async function CoveragePage() {
         <div className="rounded-xl border border-ink-100 bg-canvas-raised px-5 py-12 text-center">
           <p className="text-sm font-semibold text-ink-900">No coverage recorded yet</p>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-ink-500">
-            Add a row for each asset type and area you can genuinely source in. Five or six rows is
-            usually enough to start — matching works from the moment the first one exists.
+            Matching needs to know what you can source. Add rows above for the asset types and
+            areas you work in — or start from a set covering Melbourne&rsquo;s main industrial and
+            commercial precincts and correct them.
+          </p>
+          <form action={seedStarterCoverageAction} className="mt-5">
+            <button type="submit" className="btn-secondary !min-h-[2.5rem] px-5 text-sm">
+              Add {STARTER_COVERAGE_COUNT} starter areas to edit
+            </button>
+          </form>
+          <p className="mx-auto mt-3 max-w-md text-xs text-ink-400">
+            Every one is marked VERIFY until you confirm it. They are a starting point, not
+            knowledge of your patch.
           </p>
         </div>
       ) : (

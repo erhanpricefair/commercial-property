@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import LoginForm from "@/components/admin/LoginForm";
 import { getCurrentAdmin } from "@/lib/auth";
+import { needsSetup } from "@/lib/setup";
 import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -15,6 +16,8 @@ export const dynamic = "force-dynamic";
 export default async function AdminLoginPage() {
   const admin = await getCurrentAdmin();
   if (admin) redirect("/admin");
+  // Nothing to sign in to yet — send them to create the first account.
+  if (needsSetup()) redirect("/admin/setup");
 
   return (
     <div className="grid min-h-screen place-items-center bg-canvas-sunken px-5 py-12">
