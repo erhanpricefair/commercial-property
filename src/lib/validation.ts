@@ -8,6 +8,7 @@ import {
   PROPERTY_TYPES,
   TIMEFRAMES,
 } from "./taxonomy";
+import { HOME_BUDGETS, HOME_PURPOSES, HOME_TIMEFRAMES, HOME_TYPES } from "./content/home-landing";
 
 /** Australian mobile numbers, tolerant of spaces and +61 form. */
 const auMobile = z
@@ -63,6 +64,27 @@ export const leadSchema = z.object({
 });
 
 export type LeadInput = z.infer<typeof leadSchema>;
+
+/** The residential home-buyer form on the landing page. */
+export const homeEnquirySchema = z.object({
+  homeType: z.enum(HOME_TYPES),
+  budget: z.enum(HOME_BUDGETS),
+  suburbs: z.string().trim().max(160).optional().or(z.literal("")),
+  timeframe: z.enum(HOME_TIMEFRAMES),
+  purpose: z.enum(HOME_PURPOSES),
+  firstName: name,
+  lastName: name.optional().or(z.literal("")),
+  email: z.string().trim().toLowerCase().email("Please enter a valid email address").max(160),
+  mobile: auMobile,
+  consentMarketing: z.boolean().optional().default(false),
+  source: z.string().trim().max(80).optional(),
+  sourceDetail: z.string().trim().max(200).optional(),
+  landingPage: z.string().trim().max(300).optional(),
+  ...attributionFields,
+  company: z.string().max(0).optional().or(z.literal("")),
+});
+
+export type HomeEnquiryInput = z.infer<typeof homeEnquirySchema>;
 
 export const guideSchema = z.object({
   firstName: name,

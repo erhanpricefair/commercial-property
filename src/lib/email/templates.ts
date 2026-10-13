@@ -106,6 +106,25 @@ Kind regards,
 Information provided is general in nature and does not constitute financial, legal or investment advice. Commercial property involves risks and investors should conduct their own due diligence and obtain independent professional advice before making an investment decision.`,
   },
   {
+    key: "home_enquiry_received",
+    name: "Home buyer — enquiry received",
+    subject: "Thanks — we've got your details",
+    delayHours: 0,
+    body: `Hi {{firstName}},
+
+Thanks for getting in touch. Here's what you told us:
+
+{{summary}}
+
+A member of our team will contact you shortly to talk through what you're looking for. If anything has changed in the meantime, just reply to this email.
+
+Kind regards,
+{{siteName}}
+
+---
+Information provided is general in nature. Registering your details does not create any obligation to buy.`,
+  },
+  {
     key: "guide_delivery",
     name: "Lead magnet — Starter guide",
     subject: "Your Commercial Property Investor Starter Guide",

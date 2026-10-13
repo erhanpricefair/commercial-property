@@ -16,6 +16,7 @@ const SRC = path.join(process.cwd(), "src");
 const PUBLIC_ROUTE_DIRS = [
   "app/(site)",
   "app/(campaign)",
+  "app/(home)",
   "app/sitemap.ts",
   "app/robots.ts",
 ];

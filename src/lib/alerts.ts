@@ -67,6 +67,24 @@ Open in admin: ${adminUrl}
 }
 
 /**
+ * A plain owner alert, for leads that don't come through the commercial
+ * qualification form (e.g. the home-buyer landing page). Same recipients and
+ * provider as `notifyOwnerOfHotLead`; never throws.
+ */
+export async function sendOwnerAlert(subject: string, body: string): Promise<void> {
+  const recipients = (process.env.OWNER_ALERT_EMAIL ?? "")
+    .split(",")
+    .map((address) => address.trim())
+    .filter(Boolean);
+  const webhook = process.env.OWNER_ALERT_WEBHOOK;
+  if (!recipients.length && !webhook) return;
+  await Promise.all([
+    ...recipients.map((to) => sendAlertEmail(to, subject, body)),
+    webhook ? postWebhook(webhook, { subject, body }) : null,
+  ].filter(Boolean) as Promise<void>[]).catch(() => undefined);
+}
+
+/**
  * Sends through whichever provider is configured, reusing the same env vars as
  * the follow-up dispatcher so there is only one thing to set up.
  */

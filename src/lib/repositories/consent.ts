@@ -24,7 +24,7 @@ import { logActivity } from "./activity";
  * reading, and the classification should be confirmed by a legal adviser.
  */
 
-export const TRANSACTIONAL_TEMPLATES = new Set(["investor_welcome", "guide_delivery"]);
+export const TRANSACTIONAL_TEMPLATES = new Set(["investor_welcome", "guide_delivery", "home_enquiry_received"]);
 
 export function isMarketingTemplate(key: string | null | undefined): boolean {
   // Logged and inbound rows have no template; they are never sent.

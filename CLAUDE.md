@@ -31,8 +31,12 @@ npm run typecheck && npm test && npm run audit:privacy
 
 ## Route groups
 
-`src/app` has four root layouts, one per group. This is not cosmetic:
+`src/app` has five root layouts, one per group. This is not cosmetic:
 
+- `(home)` — the front page (`/`): a residential home-buyer lead-generation
+  landing page. Analytics, no navigation, indexed. Copy, form options and
+  photos all live in `src/lib/content/home-landing.ts`; leads post to
+  `/api/home-enquiry` → `services/home-enquiry.ts` and land in the same admin.
 - `(site)` — public marketing. Header, footer, analytics.
 - `(campaign)` — paid landing pages at `/lp/*`. Analytics, no navigation
   (an outbound link leaks a click that was paid for). noindex.
@@ -142,6 +146,9 @@ on carries the form itself (`InlineForm`), not a link to it — a link to
   consider". Never a guarantee, never a comparison claiming one sector is better.
 - Illustrative figures must be labelled illustrative and must not come from a
   real property.
-- Imagery is abstract SVG, never photography — a photo of a real building can
-  identify a development.
+- Imagery on the commercial pages is abstract SVG, never photography — a photo
+  of a real building can identify a development. The home-buyer landing page
+  uses generic stock photos (Unsplash License) by the owner's choice; they
+  must never be of a home the agency is marketing, and stay labelled
+  "for illustration only".
 - Tap targets are 48px minimum; the qualification form advances on single-select.
