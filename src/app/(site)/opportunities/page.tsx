@@ -82,7 +82,7 @@ export default function OpportunitiesPage() {
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <CtaLink href="/register" location="opportunities_hero">
-              See Current Opportunities
+              Register Your Criteria
             </CtaLink>
             <Link href="/how-it-works" className="btn-secondary">
               How It Works

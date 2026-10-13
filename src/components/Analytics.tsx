@@ -2,7 +2,7 @@
 
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { trackPageView } from "@/lib/analytics";
 
 /**
@@ -21,8 +21,17 @@ const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 function RouteChangeTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
+    // The landing page is already counted by the tags themselves — gtag's
+    // `config` (send_page_view) and the Pixel's `fbq('track','PageView')`.
+    // Counting it here as well doubled every landing-page view and halved
+    // the apparent conversion rate of every campaign.
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     const query = searchParams.toString();
     trackPageView(query ? `${pathname}?${query}` : pathname);
   }, [pathname, searchParams]);

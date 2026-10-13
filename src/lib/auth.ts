@@ -1,7 +1,7 @@
 import "server-only";
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
-import { getDb } from "./db";
+import { getDb, toSqliteTime } from "./db";
 import { decoyHash, hashPassword, verifyPassword } from "./password";
 
 export { hashPassword, verifyPassword };
@@ -54,7 +54,7 @@ export function login(
   db.prepare(
     `INSERT INTO admin_sessions (id, user_id, expires_at, user_agent, ip)
      VALUES (?, ?, ?, ?, ?)`,
-  ).run(token, row.id, expiresAt.toISOString(), meta.userAgent ?? null, meta.ip ?? null);
+  ).run(token, row.id, toSqliteTime(expiresAt), meta.userAgent ?? null, meta.ip ?? null);
 
   db.prepare("UPDATE admin_users SET last_login_at = datetime('now') WHERE id = ?").run(row.id);
 
@@ -71,7 +71,7 @@ export function resolveSession(token: string | undefined | null): AdminUser | nu
          JOIN admin_users u ON u.id = s.user_id
         WHERE s.id = ?
           AND u.is_active = 1
-          AND s.expires_at > datetime('now')`,
+          AND datetime(s.expires_at) > datetime('now')`,
     )
     .get(token) as AdminUser | undefined;
   return row ?? null;
@@ -84,7 +84,7 @@ export function destroySession(token: string | undefined | null): void {
 
 /** Housekeeping — safe to call on any admin request. */
 export function purgeExpiredSessions(): void {
-  getDb().prepare("DELETE FROM admin_sessions WHERE expires_at <= datetime('now')").run();
+  getDb().prepare("DELETE FROM admin_sessions WHERE datetime(expires_at) <= datetime('now')").run();
 }
 
 /** Current admin for a server component / route handler, or null. */

@@ -47,6 +47,7 @@ type CallRow = {
   finance_status: string | null;
   timeframe: string | null;
   match_count: number;
+  owner_name: string | null;
 };
 
 const SELECT = `
@@ -55,31 +56,44 @@ const SELECT = `
          i.next_followup_at, i.notes_from_lead,
          p.property_type, p.budget, p.location_scope, p.location_free,
          p.finance_status, p.timeframe,
-         (SELECT COUNT(*) FROM opportunity_matches m WHERE m.investor_id = i.id) AS match_count
+         (SELECT COUNT(*) FROM opportunity_matches m WHERE m.investor_id = i.id) AS match_count,
+         (SELECT name FROM admin_users a WHERE a.id = i.assigned_to) AS owner_name
     FROM investors i
     LEFT JOIN investor_preferences p ON p.id = (
       SELECT id FROM investor_preferences WHERE investor_id = i.id ORDER BY id DESC LIMIT 1
     )
    WHERE i.status NOT IN ('converted','not_suitable')`;
 
-export default async function TodayPage() {
-  await requireAdminPage();
+export default async function TodayPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ who?: string }>;
+}) {
+  const admin = await requireAdminPage();
+  const { who } = await searchParams;
+  const showAll = who === "all";
   const db = getDb();
   const commissionRate = Number(getSetting("commission_rate")) || 4;
 
+  // By default: my leads plus anything nobody owns yet. Leads another agent
+  // owns stay off this list so two people don't ring the same investor.
+  const ownerClause = showAll ? "" : " AND (i.assigned_to IS NULL OR i.assigned_to = @me)";
+
   // Never contacted and hot — the most valuable calls available right now.
   const uncontacted = db
-    .prepare(`${SELECT} AND i.last_contact_at IS NULL ORDER BY i.lead_score DESC, i.created_at DESC LIMIT 25`)
-    .all() as CallRow[];
+    .prepare(
+      `${SELECT}${ownerClause} AND i.last_contact_at IS NULL ORDER BY i.lead_score DESC, i.created_at DESC LIMIT 25`,
+    )
+    .all(...(showAll ? [] : [{ me: admin.id }])) as CallRow[];
 
   // Follow-ups that have come due.
   const due = db
     .prepare(
-      `${SELECT} AND i.last_contact_at IS NOT NULL
+      `${SELECT}${ownerClause} AND i.last_contact_at IS NOT NULL
          AND i.next_followup_at IS NOT NULL AND i.next_followup_at <= datetime('now')
        ORDER BY i.next_followup_at ASC LIMIT 25`,
     )
-    .all() as CallRow[];
+    .all(...(showAll ? [] : [{ me: admin.id }])) as CallRow[];
 
   return (
     <>
@@ -87,6 +101,23 @@ export default async function TodayPage() {
         title="Call list"
         description="Work top to bottom. Uncontacted leads first — the ones most likely to still be thinking about it."
       />
+
+      <nav aria-label="Whose leads" className="mb-6 flex gap-2 text-sm">
+        <Link
+          href="/admin/today"
+          aria-current={!showAll ? "page" : undefined}
+          className={`inline-flex min-h-[3rem] items-center rounded-lg border px-4 ${!showAll ? "border-ink-900 bg-ink-900 text-canvas" : "border-ink-200 text-ink-700"}`}
+        >
+          Mine + unassigned
+        </Link>
+        <Link
+          href="/admin/today?who=all"
+          aria-current={showAll ? "page" : undefined}
+          className={`inline-flex min-h-[3rem] items-center rounded-lg border px-4 ${showAll ? "border-ink-900 bg-ink-900 text-canvas" : "border-ink-200 text-ink-700"}`}
+        >
+          Everyone&rsquo;s
+        </Link>
+      </nav>
 
       <CallSection
         title="Never contacted"
@@ -189,6 +220,7 @@ async function CallCard({ row, commissionRate }: { row: CallRow; commissionRate:
               Registered {formatDate(row.created_at)}
               {row.last_contact_at ? ` · last contact ${formatDate(row.last_contact_at)}` : " · never contacted"}
               {row.next_followup_at ? ` · due ${formatDate(row.next_followup_at)}` : ""}
+              {` · ${row.owner_name ? `owner: ${row.owner_name}` : "unassigned"}`}
             </p>
           </div>
           {potentialCommission ? (

@@ -125,17 +125,16 @@ If all three work, you're live.
 
 ---
 
-## Two things that still need a schedule
+## Email sending and backups
 
-Neither is urgent on day one, but the follow-up emails won't send without the
-first.
+**Email.** The server sends queued email itself every 5 minutes
+(`EMAIL_DISPATCH_INTERVAL_SECONDS`), but only once `EMAIL_PROVIDER` is set to
+a real provider with its key. Until then nothing is sent — confirmations and
+guide links wait in the queue. Keep the app on ONE machine (fly.toml does):
+two machines would each have their own database. `npm run email:dispatch`
+still works for previewing messages locally.
 
-**Follow-up emails.** Queued messages need something to send them every 15
-minutes or so. On Railway: add a **Cron** service running
-`npm run email:dispatch`. On Fly: a scheduled machine. Ask whoever set up the
-deploy — it's a five-minute job.
-
-**Backups.** The database is your entire lead pipeline. Railway volumes can be
+**Backups — not automatic.** The database is your entire lead pipeline. Railway volumes can be
 backed up from their dashboard; on Fly use
 `fly ssh sftp get /data/platform.db`. Set a reminder if nothing automatic.
 

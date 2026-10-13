@@ -11,6 +11,6 @@ import { dispatchDueEmails } from "../src/lib/email/dispatch.ts";
 
 const result = await dispatchDueEmails(50);
 console.log(
-  `Attempted ${result.attempted} · sent ${result.sent} · failed ${result.failed}` +
+  `Attempted ${result.attempted} · sent ${result.sent} · failed ${result.failed} · suppressed (no consent) ${result.suppressed}` +
     (process.env.EMAIL_PROVIDER ? "" : "  (EMAIL_PROVIDER not set — log mode)"),
 );

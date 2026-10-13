@@ -26,7 +26,7 @@ export const DISCLAIMER_FULL =
 
 /** Canonical primary and secondary calls to action, used site-wide. */
 export const CTA = {
-  primary: { label: "See Current Opportunities", href: "/register" },
+  primary: { label: "Register Your Criteria", href: "/register" },
   secondary: { label: "How It Works", href: "/how-it-works" },
   register: { label: "Register for Investor Access", href: "/register" },
   guide: { label: "Get the Investor Starter Guide", href: "/guide" },

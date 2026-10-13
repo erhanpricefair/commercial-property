@@ -145,7 +145,13 @@ export function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value.includes("T") ? value : value.replace(" ", "T") + "Z");
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" });
+  return date.toLocaleDateString("en-AU", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    // The server runs in UTC; the people reading this are in Melbourne.
+    timeZone: "Australia/Melbourne",
+  });
 }
 
 export function formatDateTime(value: string | null | undefined): string {
@@ -158,5 +164,6 @@ export function formatDateTime(value: string | null | undefined): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Australia/Melbourne",
   });
 }

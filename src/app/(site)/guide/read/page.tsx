@@ -28,7 +28,7 @@ export default function GuideReadPage() {
                 <li key={section.id}>
                   <a
                     href={`#${section.id}`}
-                    className="block text-sm leading-snug text-ink-500 transition hover:text-ink-900"
+                    className="block py-3 text-sm leading-snug text-ink-500 transition hover:text-ink-900"
                   >
                     {section.title}
                   </a>

@@ -17,7 +17,9 @@ const config: Config = {
           700: "#2C323A",
           600: "#414954",
           500: "#5C6672",
-          400: "#7C8794",
+          // Darkened from #7C8794, which failed WCAG AA (3.3:1) as small text on
+          // every light background. #606A76 is 4.6:1 even on canvas-deep.
+          400: "#606A76",
           300: "#A3ACB7",
           200: "#C9D0D8",
           100: "#E4E8EC",
@@ -31,7 +33,8 @@ const config: Config = {
         },
         brass: {
           DEFAULT: "#9C7A46",
-          600: "#8A6B3B",
+          // Darkened from #8A6B3B (4.4:1 on canvas-sunken) for AA small text.
+          600: "#7A5E33",
           500: "#9C7A46",
           400: "#B99A60",
           200: "#E3D5BC",

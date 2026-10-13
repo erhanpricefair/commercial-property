@@ -51,8 +51,14 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     heading: "Disclosure",
     paragraphs: [
       "We may disclose your personal information to service providers who help us operate this business — for example email delivery, customer relationship management and website hosting providers. These providers are engaged to handle your information only for the purposes we specify.",
-      "Where an opportunity appears relevant to your criteria and you ask us to progress it, we may need to disclose your details to the relevant party in order to do so. We will make that clear to you at the time.",
+      "Where an opportunity appears relevant to your criteria and you ask us to progress it, we may need to disclose your details to the relevant party — for example the builder, developer or selling agent — in order to do so. We will make that clear to you at the time.",
       "We do not sell your personal information.",
+    ],
+  },
+  {
+    heading: "Overseas disclosure",
+    paragraphs: [
+      "Some of the service providers we use to operate this website — for example email delivery, customer relationship management, analytics and advertising platforms — may store or process information on servers located outside Australia, including in the United States. Where that happens, we take reasonable steps to ensure those providers handle personal information consistently with the Australian Privacy Principles.",
     ],
   },
   {

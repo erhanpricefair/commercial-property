@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
+import { logActivity } from "@/lib/repositories/activity";
+import { isReleaseLevel } from "@/lib/release";
+import { nowIso } from "@/lib/db";
 import {
+  getOpportunity,
   computeYield,
   createOpportunity,
   deleteOpportunity,
@@ -55,22 +59,64 @@ function readForm(formData: FormData): OpportunityInput {
     development_name: str("development_name"),
     address: str("address"),
     lot_unit_number: str("lot_unit_number"),
+    release_approval: isReleaseLevel(formData.get("release_approval"))
+      ? String(formData.get("release_approval"))
+      : "none",
+    release_approved_by: str("release_approved_by"),
+    release_approval_ref: str("release_approval_ref"),
+    release_approval_expires: /^\d{4}-\d{2}-\d{2}$/.test(String(formData.get("release_approval_expires") ?? ""))
+      ? String(formData.get("release_approval_expires"))
+      : null,
   };
 }
 
+/**
+ * Stamp who recorded an approval change, and keep a trail of it. The audit
+ * trail is what answers "who said we could send this?" months later.
+ */
+function stampRelease(
+  input: OpportunityInput,
+  previous: OpportunityInput | null,
+  admin: { id: number; email: string },
+  reference: string,
+): OpportunityInput {
+  const changed =
+    !previous ||
+    previous.release_approval !== input.release_approval ||
+    (previous.release_approved_by ?? null) !== (input.release_approved_by ?? null) ||
+    (previous.release_approval_ref ?? null) !== (input.release_approval_ref ?? null) ||
+    (previous.release_approval_expires ?? null) !== (input.release_approval_expires ?? null);
+  if (!changed) return input;
+  if (previous || input.release_approval !== "none") {
+    logActivity(null, "release_approval_changed", `${reference}: release approval set to ${input.release_approval}`, {
+      by: admin.email,
+      from: previous?.release_approval ?? null,
+      to: input.release_approval,
+      approvedBy: input.release_approved_by ?? null,
+      evidence: input.release_approval_ref ?? null,
+      expires: input.release_approval_expires ?? null,
+    });
+  }
+  return { ...input, release_recorded_at: nowIso(), release_recorded_by: admin.id };
+}
+
 export async function createOpportunityAction(formData: FormData) {
-  await requireAdmin();
-  const id = createOpportunity(readForm(formData));
+  const admin = await requireAdmin();
+  const input = readForm(formData);
+  const id = createOpportunity(stampRelease(input, null, admin, input.reference));
   revalidatePath("/admin/opportunities");
   revalidatePath("/admin");
   redirect(`/admin/opportunities/${id}`);
 }
 
 export async function updateOpportunityAction(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const id = Number(formData.get("id"));
   if (!id) return;
-  updateOpportunity(id, readForm(formData));
+  const previous = getOpportunity(id);
+  if (!previous) return;
+  const input = readForm(formData);
+  updateOpportunity(id, stampRelease(input, previous, admin, input.reference));
   revalidatePath(`/admin/opportunities/${id}`);
   revalidatePath("/admin/opportunities");
 }

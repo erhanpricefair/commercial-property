@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
-import { updateInvestorStatus, updateInvestorFields } from "@/lib/repositories/investors";
+import { claimIfUnassigned, updateInvestorStatus, updateInvestorFields } from "@/lib/repositories/investors";
 import { logActivity } from "@/lib/repositories/activity";
 import type { LeadStatus } from "@/lib/taxonomy";
 
@@ -34,6 +34,12 @@ export async function logCallOutcomeAction(formData: FormData) {
   if (!result) return;
 
   if (result.status) updateInvestorStatus(investorId, result.status);
+
+  // Whoever makes the first call owns the lead, so it drops off everyone
+  // else's list and the investor isn't rung twice by two people.
+  if (claimIfUnassigned(investorId, admin.id)) {
+    logActivity(investorId, "assigned", `Claimed by ${admin.name} on first call`, { by: admin.email });
+  }
 
   updateInvestorFields(investorId, {
     last_contact_at: now,

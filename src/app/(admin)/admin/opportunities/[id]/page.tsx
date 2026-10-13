@@ -6,6 +6,7 @@ import { getOpportunity } from "@/lib/repositories/opportunities";
 import OpportunityForm from "@/components/admin/OpportunityForm";
 import { PageHeader, PrivateBadge, formatDateTime } from "@/components/admin/ui";
 import { labelFor } from "@/lib/taxonomy";
+import { RELEASE_LABELS, isReleaseLevel, releaseDecision } from "@/lib/release";
 import { deleteOpportunityAction, updateOpportunityAction } from "../actions";
 import { createPresentationAction } from "../../investors/actions";
 
@@ -13,13 +14,17 @@ export const dynamic = "force-dynamic";
 
 export default async function OpportunityDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ linkError?: string }>;
 }) {
   await requireAdminPage();
   const { id } = await params;
+  const { linkError } = await searchParams;
   const opportunity = getOpportunity(Number(id));
   if (!opportunity) notFound();
+  const release = releaseDecision(opportunity);
 
   // Which investors this opportunity matches, so the owner can act from either side.
   const matchedInvestors = getDb()
@@ -110,8 +115,24 @@ export default async function OpportunityDetailPage({
             <header className="border-b border-ink-100 px-5 py-3.5">
               <h2 className="text-sm font-semibold text-ink-900">Create a private link</h2>
             </header>
+            <div className="space-y-2 border-b border-ink-100 px-5 py-3">
+              <p className="text-xs font-semibold text-ink-700">
+                {isReleaseLevel(opportunity.release_approval)
+                  ? RELEASE_LABELS[opportunity.release_approval]
+                  : RELEASE_LABELS.none}
+              </p>
+              {release.reason && (
+                <p role="status" className="text-xs text-signal-hot">
+                  Links are blocked: {release.reason} Update the release approval in the form.
+                </p>
+              )}
+              {linkError && (
+                <p role="alert" className="text-xs text-signal-hot">Link not created: {linkError}</p>
+              )}
+            </div>
             <form action={createPresentationAction} className="space-y-3 px-5 py-4">
               <input type="hidden" name="opportunityId" value={opportunity.id} />
+              <input type="hidden" name="returnTo" value={`/admin/opportunities/${opportunity.id}`} />
               <div>
                 <label htmlFor="pres-investor" className="mb-1.5 block text-xs font-semibold text-ink-600">
                   Investor ID (optional)
@@ -130,9 +151,15 @@ export default async function OpportunityDetailPage({
                 </label>
                 <textarea id="pres-note" name="introNote" rows={2} className="field-input !py-2 text-sm" />
               </div>
-              <label className="flex items-center gap-2 text-xs text-ink-700">
-                <input type="checkbox" name="discloseIdentity" className="h-4 w-4 rounded border-ink-300" />
+              <label className={`flex items-center gap-2 text-xs ${release.canDisclose ? "text-ink-700" : "text-ink-400"}`}>
+                <input
+                  type="checkbox"
+                  name="discloseIdentity"
+                  disabled={!release.canDisclose}
+                  className="h-4 w-4 rounded border-ink-300"
+                />
                 Disclose address / development / developer
+                {!release.canDisclose && " (needs full release approval)"}
               </label>
               <label className="flex items-center gap-2 text-xs text-ink-700">
                 Expires in
@@ -146,7 +173,11 @@ export default async function OpportunityDetailPage({
                 />
                 days
               </label>
-              <button type="submit" className="btn-primary w-full !min-h-[2.5rem] text-sm">
+              <button
+                type="submit"
+                disabled={!release.canShare}
+                className="btn-primary w-full !min-h-[2.75rem] text-sm disabled:cursor-not-allowed disabled:opacity-40"
+              >
                 Create private link
               </button>
             </form>

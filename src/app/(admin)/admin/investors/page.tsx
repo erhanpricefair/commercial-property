@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireAdminPage } from "@/lib/admin-guard";
-import { listInvestors } from "@/lib/repositories/investors";
+import { listActiveAdmins, listInvestors } from "@/lib/repositories/investors";
 import {
   ClassificationBadge,
   PageHeader,
@@ -24,7 +24,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 const PAGE_SIZE = 50;
 
 export default async function InvestorsPage({ searchParams }: { searchParams: SearchParams }) {
-  await requireAdminPage();
+  const admin = await requireAdminPage();
   const params = await searchParams;
   const get = (key: string) => {
     const value = params[key];
@@ -44,6 +44,12 @@ export default async function InvestorsPage({ searchParams }: { searchParams: Se
     from: get("from") || undefined,
     to: get("to") || undefined,
     needsFollowUp: get("followUp") === "1",
+    owner:
+      get("owner") === "unassigned"
+        ? ("unassigned" as const)
+        : get("owner") === "me"
+          ? admin.id
+          : Number(get("owner")) || undefined,
     sort: (get("sort") as "recent" | "score" | "name" | undefined) ?? "recent",
     limit: PAGE_SIZE,
     offset: (page - 1) * PAGE_SIZE,
@@ -66,6 +72,7 @@ export default async function InvestorsPage({ searchParams }: { searchParams: Se
       from: filters.from,
       to: filters.to,
       followUp: filters.needsFollowUp ? "1" : undefined,
+      owner: get("owner") || undefined,
       sort: filters.sort === "recent" ? undefined : filters.sort,
       ...overrides,
     };
@@ -136,6 +143,17 @@ export default async function InvestorsPage({ searchParams }: { searchParams: Se
             <label htmlFor="to" className="mb-1.5 block text-xs font-semibold text-ink-600">To</label>
             <input id="to" name="to" type="date" defaultValue={filters.to ?? ""} className="field-input !py-2 text-sm" />
           </div>
+          <div>
+            <label htmlFor="owner" className="mb-1.5 block text-xs font-semibold text-ink-600">Owner</label>
+            <select id="owner" name="owner" defaultValue={get("owner") ?? ""} className="field-input !py-2 text-sm">
+              <option value="">Anyone</option>
+              <option value="me">Me</option>
+              <option value="unassigned">Unassigned</option>
+              {listActiveAdmins().map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
           <label className="flex items-end gap-2 pb-2 text-sm text-ink-700">
             <input
               type="checkbox"
@@ -187,6 +205,7 @@ export default async function InvestorsPage({ searchParams }: { searchParams: Se
                   </Link>
                   <p className="mt-0.5 text-xs text-ink-500">{row.email}</p>
                   {row.mobile && <p className="text-xs text-ink-400">{row.mobile}</p>}
+                  <p className="text-xs text-ink-400">{row.owner_name ? `Owner: ${row.owner_name}` : "Unassigned"}</p>
                 </td>
                 <td className="px-4 py-3 text-xs text-ink-600">
                   <p>{labelFor("propertyType", row.property_type)}</p>

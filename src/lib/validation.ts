@@ -66,6 +66,7 @@ export type LeadInput = z.infer<typeof leadSchema>;
 
 export const guideSchema = z.object({
   firstName: name,
+  consentMarketing: z.boolean().optional().default(false),
   email: z.string().trim().toLowerCase().email("Please enter a valid email address").max(160),
   company: z.string().max(0).optional().or(z.literal("")),
   source: z.string().trim().max(80).optional(),

@@ -100,7 +100,7 @@ export default async function LandingPageRoute({
               <p className="mt-6 max-w-xl text-lg leading-[1.65] text-ink-600">{page.intro}</p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <a href="#register" className="btn-primary">
-                  See Current Opportunities
+                  Register Your Criteria
                 </a>
                 <Link href="/how-it-works" className="btn-secondary">
                   How It Works

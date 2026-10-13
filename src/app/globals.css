@@ -68,7 +68,8 @@
   }
 
   .btn-brass {
-    @apply btn bg-brass-500 text-white shadow-card hover:bg-brass-600;
+    /* brass-600, not 500: white on brass-500 is 4.0:1, below AA for button text. */
+    @apply btn bg-brass-600 text-white shadow-card hover:bg-ink-800;
   }
 
   .card {

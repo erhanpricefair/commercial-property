@@ -397,6 +397,8 @@ export function migrate(db: Database.Database): void {
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_investors_utm_campaign ON investors(utm_campaign);
     CREATE INDEX IF NOT EXISTS idx_investors_utm_source ON investors(utm_source);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_investors_unsubscribe_token ON investors(unsubscribe_token);
+    CREATE INDEX IF NOT EXISTS idx_investors_assigned ON investors(assigned_to);
   `);
 }
 
@@ -417,6 +419,24 @@ function addMissingColumns(db: Database.Database): void {
     { table: "investors", column: "utm_term", definition: "TEXT" },
     { table: "investors", column: "click_id", definition: "TEXT" },
     { table: "investors", column: "referrer", definition: "TEXT" },
+
+    /* Builder / channel-partner release approval (see src/lib/release.ts).
+       Defaults to 'none', so stock on an existing install is NOT shareable
+       until someone records who approved it — deliberately fail-closed. */
+    { table: "opportunities", column: "release_approval", definition: "TEXT NOT NULL DEFAULT 'none'" },
+    { table: "opportunities", column: "release_approved_by", definition: "TEXT" },
+    { table: "opportunities", column: "release_approval_ref", definition: "TEXT" },
+    { table: "opportunities", column: "release_approval_expires", definition: "TEXT" },
+    { table: "opportunities", column: "release_recorded_at", definition: "TEXT" },
+    { table: "opportunities", column: "release_recorded_by", definition: "INTEGER" },
+
+    /* Marketing consent withdrawal. One token per investor so an unsubscribe
+       link identifies the record without exposing an email address or ID. */
+    { table: "investors", column: "unsubscribed_at", definition: "TEXT" },
+    { table: "investors", column: "unsubscribe_token", definition: "TEXT" },
+
+    /* Which admin owns the lead. Null = unassigned, visible to everyone. */
+    { table: "investors", column: "assigned_to", definition: "INTEGER REFERENCES admin_users(id) ON DELETE SET NULL" },
   ];
 
   for (const { table, column, definition } of additions) {
@@ -435,5 +455,18 @@ export function createInMemoryDb(): Database.Database {
 }
 
 export function nowIso(): string {
-  return new Date().toISOString().replace("T", " ").slice(0, 19);
+  return toSqliteTime(new Date());
+}
+
+/**
+ * A timestamp in the exact form SQLite's `datetime()` produces.
+ *
+ * Timestamps are compared as TEXT. An ISO string (`2026-10-20T05:00:00.000Z`)
+ * sorts after `2026-10-20 23:00:00` because `T` > space, so an expiry written
+ * with `toISOString()` stays valid until the end of its UTC day. Write every
+ * stored time through this, and wrap legacy columns in `datetime()` when
+ * comparing.
+ */
+export function toSqliteTime(date: Date): string {
+  return date.toISOString().replace("T", " ").slice(0, 19);
 }

@@ -40,7 +40,10 @@ export function computeFunnelSteps(
   return labels.map((label, index) => {
     const step = index + 1;
     const reached = step === 1 ? started : (reachedByStep.get(step) ?? 0);
-    const previous = step === 1 ? started : (reachedByStep.get(step - 1) ?? started);
+    // A previous step with no events had nobody reach it. Falling back to
+    // `started` (as this once did) charged every visitor who never got that far
+    // as a drop-off at the next step.
+    const previous = step <= 2 ? started : (reachedByStep.get(step - 1) ?? 0);
     const dropOff = Math.max(0, previous - reached);
     return {
       step,

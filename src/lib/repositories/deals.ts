@@ -105,6 +105,8 @@ export function updateDeal(
     commissionRate?: number;
     expectedSettlement?: string | null;
     commissionPaidAt?: string | null;
+    /** Sets the paid date only if none is recorded yet. */
+    markPaidIfUnpaid?: string;
     notes?: string | null;
   },
 ): void {
@@ -132,7 +134,9 @@ export function updateDeal(
     rate,
     commissionFor(price, rate),
     input.expectedSettlement === undefined ? existing.expected_settlement : input.expectedSettlement || null,
-    input.commissionPaidAt === undefined ? existing.commission_paid_at : input.commissionPaidAt || null,
+    input.commissionPaidAt === undefined
+      ? (existing.commission_paid_at ?? input.markPaidIfUnpaid ?? null)
+      : input.commissionPaidAt || null,
     input.notes === undefined ? existing.notes : input.notes || null,
     id,
   );
@@ -176,6 +180,13 @@ export function listDeals(): DealWithContext[] {
 /* ------------------------------------------------------------------ */
 
 export type RevenueSnapshot = ReturnType<typeof getRevenueSnapshot>;
+
+/**
+ * Observed conversion is trusted only above these. One deal against six
+ * leads is not a 17% conversion rate, it is noise.
+ */
+export const MIN_LEADS_FOR_OBSERVED = 40;
+export const MIN_DEALS_FOR_OBSERVED = 3;
 
 export function getRevenueSnapshot() {
   const db = getDb();
@@ -225,13 +236,21 @@ export function getRevenueSnapshot() {
    * because it looks authoritative. Below the threshold we keep using the
    * assumption and say so.
    */
-  const MIN_LEADS_FOR_OBSERVED = 40;
-  const MIN_DEALS_FOR_OBSERVED = 3;
-
-  const totalLeads = (db.prepare("SELECT COUNT(*) AS c FROM investors").get() as { c: number }).c;
+  // Both sides of the ratio count PEOPLE who REGISTERED. The assumed rate is
+  // "registrations → paid deals", so the observed one must be the same shape:
+  // counting every investor row (guide downloads, contact-form messages) in
+  // the denominator understated it, and counting deals rather than buyers in
+  // the numerator overstated it whenever one buyer took two properties.
+  const totalLeads = (
+    db
+      .prepare(
+        "SELECT COUNT(*) AS c FROM investors i WHERE EXISTS (SELECT 1 FROM investor_preferences p WHERE p.investor_id = i.id)",
+      )
+      .get() as { c: number }
+  ).c;
   const wonDeals = (
     db
-      .prepare("SELECT COUNT(*) AS c FROM deals WHERE stage IN ('committed','settled')")
+      .prepare("SELECT COUNT(DISTINCT investor_id) AS c FROM deals WHERE stage IN ('committed','settled')")
       .get() as { c: number }
   ).c;
 

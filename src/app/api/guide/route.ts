@@ -6,6 +6,9 @@ import { getEmailTemplate, baseMergeVars } from "@/lib/email";
 import { renderTemplate } from "@/lib/email/templates";
 import { dispatchLeadEvent } from "@/lib/integrations";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { findInvestorByEmail } from "@/lib/repositories/investors";
+import { grantConsent } from "@/lib/repositories/consent";
+import { clientIp, rejectNonJson } from "@/lib/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,10 +21,10 @@ export const dynamic = "force-dynamic";
  * see it in the dashboard alongside registrations and follow up if they choose.
  */
 export async function POST(request: NextRequest) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "unknown";
+  const notJson = rejectNonJson(request);
+  if (notJson) return notJson;
+
+  const ip = clientIp(request.headers);
 
   if (!checkRateLimit(`guide:${ip}`, { limit: 8, windowMs: 10 * 60 * 1000 })) {
     return NextResponse.json(
@@ -48,18 +51,38 @@ export async function POST(request: NextRequest) {
   const input = parsed.data;
   if (input.company) return NextResponse.json({ ok: true });
 
+  // Someone already on file is the same person asking for one more thing —
+  // record it against them rather than creating a second lead.
+  const existing = findInvestorByEmail(input.email);
   const db = getDb();
-  const investorId = Number(
+  const investorId = existing?.id ?? Number(
     db
       .prepare(
         `INSERT INTO investors
            (first_name, last_name, email, mobile, contact_method, lead_score, classification,
-            status, source, landing_page, next_followup_at)
-         VALUES (?, '', ?, '', 'email', 5, 'NURTURE', 'new', ?, ?, datetime('now', '+14 days'))`,
+            status, source, source_detail, landing_page, utm_source, utm_medium, utm_campaign,
+            utm_content, utm_term, click_id, referrer, consent_marketing, next_followup_at)
+         VALUES (?, '', ?, '', 'email', 5, 'NURTURE', 'new', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                 datetime('now', '+14 days'))`,
       )
-      .run(input.firstName, input.email, input.source ?? "guide_download", input.landingPage ?? null)
+      .run(
+        input.firstName,
+        input.email,
+        input.source ?? "guide_download",
+        input.sourceDetail ?? null,
+        input.landingPage ?? null,
+        input.utmSource || null,
+        input.utmMedium || null,
+        input.utmCampaign || null,
+        input.utmContent || null,
+        input.utmTerm || null,
+        input.clickId || null,
+        input.referrer || null,
+        input.consentMarketing ? 1 : 0,
+      )
       .lastInsertRowid,
   );
+  if (existing && input.consentMarketing) grantConsent(investorId);
 
   logActivity(investorId, "guide_download", "Requested the Investor Starter Guide", {
     source: input.source ?? "guide_download",
@@ -87,7 +110,7 @@ export async function POST(request: NextRequest) {
       email: input.email,
       mobile: "",
       contactMethod: "email",
-      consentMarketing: false,
+      consentMarketing: Boolean(input.consentMarketing),
     },
     internal: { leadScore: 5, classification: "NURTURE", matchCount: 0 },
     attribution: { source: input.source ?? "guide_download", landingPage: input.landingPage ?? null },

@@ -40,7 +40,7 @@ const POSTS: Post[] = [
   {
     slug: "02-entry-price",
     eyebrow: "Entry price",
-    headline: "Most people think commercial starts at $1M.",
+    headline: "Commercial property doesn't always start at $1M.",
     sub: "Smaller commercial and storage-style assets can sit well below that.",
     kicker: "Register your budget · See what may suit",
   },

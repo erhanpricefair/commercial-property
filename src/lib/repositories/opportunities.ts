@@ -1,6 +1,7 @@
 import "server-only";
 import crypto from "node:crypto";
-import { getDb } from "../db";
+import { getDb, toSqliteTime } from "../db";
+import { releaseDecision, ReleaseNotApprovedError } from "../release";
 import { matchOpportunities, type MatchCriteria, type MatchableOpportunity } from "../matching";
 import { getInvestor } from "./investors";
 
@@ -36,6 +37,13 @@ export type OpportunityRow = {
   development_name: string | null;
   address: string | null;
   lot_unit_number: string | null;
+  /* Builder / partner release approval — see src/lib/release.ts */
+  release_approval: string;
+  release_approved_by: string | null;
+  release_approval_ref: string | null;
+  release_approval_expires: string | null;
+  release_recorded_at: string | null;
+  release_recorded_by: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -51,8 +59,19 @@ export const IDENTIFYING_FIELDS = [
   "internal_notes",
 ] as const;
 
-export type OpportunityInput = Omit<OpportunityRow, "id" | "created_at" | "updated_at" | "visibility"> &
-  Partial<Pick<OpportunityRow, "visibility">>;
+type ReleaseColumns =
+  | "release_approval"
+  | "release_approved_by"
+  | "release_approval_ref"
+  | "release_approval_expires"
+  | "release_recorded_at"
+  | "release_recorded_by";
+
+export type OpportunityInput = Omit<
+  OpportunityRow,
+  "id" | "created_at" | "updated_at" | "visibility" | ReleaseColumns
+> &
+  Partial<Pick<OpportunityRow, "visibility" | ReleaseColumns>>;
 
 export function listOpportunities(filters: {
   propertyType?: string;
@@ -127,12 +146,25 @@ export function createOpportunity(input: OpportunityInput): number {
       `INSERT INTO opportunities
         (reference, visibility, property_type, suburb, state, size_sqm, price,
          estimated_rental, outgoings, estimated_yield, completion_status, availability,
-         internal_notes, source_channel, developer, development_name, address, lot_unit_number)
+         internal_notes, source_channel, developer, development_name, address, lot_unit_number,
+         release_approval, release_approved_by, release_approval_ref, release_approval_expires,
+         release_recorded_at, release_recorded_by)
        VALUES (@reference, @visibility, @property_type, @suburb, @state, @size_sqm, @price,
                @estimated_rental, @outgoings, @estimated_yield, @completion_status, @availability,
-               @internal_notes, @source_channel, @developer, @development_name, @address, @lot_unit_number)`,
+               @internal_notes, @source_channel, @developer, @development_name, @address, @lot_unit_number,
+               @release_approval, @release_approved_by, @release_approval_ref, @release_approval_expires,
+               @release_recorded_at, @release_recorded_by)`,
     )
-    .run({ ...input, visibility: input.visibility ?? "PRIVATE" });
+    .run({
+      ...input,
+      visibility: input.visibility ?? "PRIVATE",
+      release_approval: input.release_approval ?? "none",
+      release_approved_by: input.release_approved_by ?? null,
+      release_approval_ref: input.release_approval_ref ?? null,
+      release_approval_expires: input.release_approval_expires ?? null,
+      release_recorded_at: input.release_recorded_at ?? null,
+      release_recorded_by: input.release_recorded_by ?? null,
+    });
   return Number(result.lastInsertRowid);
 }
 
@@ -265,11 +297,24 @@ export function createPresentation(input: {
   expiresInDays?: number | null;
 }): PresentationRow {
   const db = getDb();
+
+  // Builder / partner approval is checked here, in the data layer, so no
+  // admin screen or script can issue a link the approval doesn't cover.
+  const opportunity = getOpportunity(input.opportunityId);
+  if (!opportunity) throw new ReleaseNotApprovedError("That opportunity no longer exists.");
+  const decision = releaseDecision(opportunity);
+  if (!decision.canShare) throw new ReleaseNotApprovedError(decision.reason ?? "Not approved for release.");
+  if (input.discloseIdentity && !decision.canDisclose) {
+    throw new ReleaseNotApprovedError(
+      "Release approval covers a summary only. Untick “disclose identity”, or record full approval first.",
+    );
+  }
+
   // 32 random bytes → 43 url-safe characters. Not guessable, not enumerable.
   const token = crypto.randomBytes(32).toString("base64url");
   const expiresAt =
     input.expiresInDays && input.expiresInDays > 0
-      ? new Date(Date.now() + input.expiresInDays * 86400_000).toISOString()
+      ? toSqliteTime(new Date(Date.now() + input.expiresInDays * 86400_000))
       : null;
 
   db.prepare(
@@ -293,10 +338,16 @@ export function listPresentations(): (PresentationRow & {
   reference: string;
   property_type: string;
   investor_name: string | null;
+  availability: string;
+  release_approval: string;
+  release_approved_by: string | null;
+  release_approval_ref: string | null;
+  release_approval_expires: string | null;
 })[] {
   return getDb()
     .prepare(
-      `SELECT p.*, o.reference, o.property_type,
+      `SELECT p.*, o.reference, o.property_type, o.availability, o.release_approval,
+              o.release_approved_by, o.release_approval_ref, o.release_approval_expires,
               CASE WHEN i.id IS NULL THEN NULL ELSE i.first_name || ' ' || i.last_name END AS investor_name
          FROM presentations p
          JOIN opportunities o ON o.id = p.opportunity_id
@@ -353,7 +404,7 @@ export function loadPresentationByToken(token: string): PresentationView | null 
          LEFT JOIN investors i ON i.id = p.investor_id
         WHERE p.token = ?
           AND p.revoked_at IS NULL
-          AND (p.expires_at IS NULL OR p.expires_at > datetime('now'))`,
+          AND (p.expires_at IS NULL OR datetime(p.expires_at) > datetime('now'))`,
     )
     .get(token) as (PresentationRow & { first_name?: string; last_name?: string }) | undefined;
   if (!row) return null;
@@ -361,7 +412,13 @@ export function loadPresentationByToken(token: string): PresentationView | null 
   const opp = getOpportunity(row.opportunity_id);
   if (!opp) return null;
 
-  const disclose = row.disclose_identity === 1;
+  // Re-checked on every view: withdrawn or lapsed approval, or stock that has
+  // sold, takes the link down without anyone having to revoke it. A downgrade
+  // from full to summary hides the identifying fields on the next view.
+  const decision = releaseDecision(opp);
+  if (!decision.canShare) return null;
+
+  const disclose = row.disclose_identity === 1 && decision.canDisclose;
 
   return {
     token: row.token,
@@ -389,6 +446,23 @@ export function loadPresentationByToken(token: string): PresentationView | null 
       lotUnitNumber: disclose ? opp.lot_unit_number : null,
     },
   };
+}
+
+/**
+ * The minimum an enquiry needs: which investor and opportunity a live,
+ * still-approved link belongs to. Null for unknown, revoked, expired or
+ * no-longer-approved links, so an enquiry can't be lodged against stock the
+ * builder has pulled.
+ */
+export function presentationForEnquiry(
+  token: string,
+): { id: number; investorId: number | null; opportunityId: number } | null {
+  const view = loadPresentationByToken(token);
+  if (!view) return null;
+  const row = getDb()
+    .prepare("SELECT id, investor_id, opportunity_id FROM presentations WHERE token = ?")
+    .get(token) as { id: number; investor_id: number | null; opportunity_id: number } | undefined;
+  return row ? { id: row.id, investorId: row.investor_id, opportunityId: row.opportunity_id } : null;
 }
 
 export function recordPresentationView(token: string): void {

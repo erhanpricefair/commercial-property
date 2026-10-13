@@ -34,7 +34,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-ink-100 bg-canvas/90 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between gap-4 sm:h-20">
-        <Link href="/" className="flex items-center gap-2.5" aria-label={`${SITE.name} home`}>
+        <Link href="/" className="flex min-h-[48px] items-center gap-2.5" aria-label={`${SITE.name} home`}>
           <Mark />
           <span className="text-[0.95rem] font-semibold leading-tight tracking-tight text-ink-900 sm:text-base">
             {SITE.name}
@@ -63,7 +63,7 @@ export default function Header() {
             }
             className="btn-primary hidden !min-h-[2.75rem] px-5 text-sm sm:inline-flex"
           >
-            See Current Opportunities
+            Register Your Criteria
           </Link>
           <button
             type="button"
@@ -110,7 +110,7 @@ export default function Header() {
               }
               className="btn-primary mt-4"
             >
-              See Current Opportunities
+              Register Your Criteria
             </Link>
             <Link href="/contact" className="btn-secondary mt-2 mb-3">
               Talk to us

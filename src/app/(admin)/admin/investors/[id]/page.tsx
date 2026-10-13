@@ -32,20 +32,29 @@ import {
   deleteNoteAction,
   logContactAction,
   queueTemplateAction,
+  recordUnsubscribeAction,
+  assignInvestorAction,
   recomputeMatchesAction,
   setFollowUpAction,
   setStatusAction,
 } from "../actions";
 
+import { releaseDecision } from "@/lib/release";
+import { isMarketingTemplate, mayMarketTo } from "@/lib/repositories/consent";
+import { listActiveAdmins } from "@/lib/repositories/investors";
+
 export const dynamic = "force-dynamic";
 
 export default async function InvestorDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ linkError?: string; emailError?: string }>;
 }) {
   await requireAdminPage();
   const { id } = await params;
+  const { linkError, emailError } = await searchParams;
   const investorId = Number(id);
   const investor = getInvestor(investorId);
   if (!investor) notFound();
@@ -91,6 +100,17 @@ export default async function InvestorDetailPage({
           </div>
         }
       />
+
+      {linkError && (
+        <div role="alert" className="mb-5 rounded-xl border border-signal-hot/30 bg-signal-hot/5 px-4 py-3 text-sm text-signal-hot">
+          Link not created: {linkError}
+        </div>
+      )}
+      {emailError && (
+        <div role="alert" className="mb-5 rounded-xl border border-signal-hot/30 bg-signal-hot/5 px-4 py-3 text-sm text-signal-hot">
+          Email not queued: {emailError}
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_22rem]">
         <div className="space-y-6">
@@ -204,19 +224,35 @@ export default async function InvestorDetailPage({
                       </div>
                     </div>
 
-                    {/* Issue a private, tokenised presentation link */}
+                    {/* Issue a private, tokenised presentation link — only
+                        where the builder / partner has approved release. */}
+                    {(() => {
+                      const release = releaseDecision(match);
+                      if (!release.canShare) {
+                        return (
+                          <p className="mt-3 rounded-lg border border-ink-100 bg-canvas-sunken px-3 py-2 text-xs text-ink-500">
+                            Can&rsquo;t be sent privately yet: {release.reason}{" "}
+                            <Link href={`/admin/opportunities/${match.id}`} className="font-semibold text-ink-700 underline">
+                              Record approval
+                            </Link>
+                          </p>
+                        );
+                      }
+                      return (
                     <details className="mt-3 rounded-lg border border-ink-100 bg-canvas-sunken">
-                      <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-ink-700">
+                      <summary className="cursor-pointer px-3 py-3 text-xs font-semibold text-ink-700">
                         Send this privately
                       </summary>
                       <form action={createPresentationAction} className="space-y-3 px-3 pb-3">
                         <input type="hidden" name="investorId" value={investorId} />
                         <input type="hidden" name="opportunityId" value={match.id} />
+                        <input type="hidden" name="returnTo" value={`/admin/investors/${investorId}`} />
                         <div>
-                          <label className="mb-1 block text-xs font-medium text-ink-600">
+                          <label htmlFor={`intro-${match.id}`} className="mb-1 block text-xs font-medium text-ink-600">
                             Intro note (optional)
                           </label>
                           <textarea
+                            id={`intro-${match.id}`}
                             name="introNote"
                             rows={2}
                             className="field-input !py-2 text-sm"
@@ -224,9 +260,15 @@ export default async function InvestorDetailPage({
                           />
                         </div>
                         <div className="flex flex-wrap items-center gap-4">
-                          <label className="flex items-center gap-2 text-xs text-ink-700">
-                            <input type="checkbox" name="discloseIdentity" className="h-4 w-4 rounded border-ink-300" />
+                          <label className={`flex items-center gap-2 text-xs ${release.canDisclose ? "text-ink-700" : "text-ink-400"}`}>
+                            <input
+                              type="checkbox"
+                              name="discloseIdentity"
+                              disabled={!release.canDisclose}
+                              className="h-4 w-4 rounded border-ink-300"
+                            />
                             Disclose address / development / developer
+                            {!release.canDisclose && " (approval is summary only)"}
                           </label>
                           <label className="flex items-center gap-2 text-xs text-ink-700">
                             Expires in
@@ -241,11 +283,13 @@ export default async function InvestorDetailPage({
                             days
                           </label>
                         </div>
-                        <button type="submit" className="btn-primary !min-h-[2.25rem] px-4 text-xs">
+                        <button type="submit" className="btn-primary !min-h-[2.75rem] px-4 text-xs">
                           Create private link
                         </button>
                       </form>
                     </details>
+                      );
+                    })()}
                   </li>
                 ))}
               </ul>
@@ -353,6 +397,33 @@ export default async function InvestorDetailPage({
 
         {/* Sidebar */}
         <aside className="space-y-6">
+          <Panel title="Owner">
+            <form action={assignInvestorAction} className="flex items-end gap-2 px-5 py-4">
+              <input type="hidden" name="investorId" value={investorId} />
+              <div className="flex-1">
+                <label htmlFor="assignTo" className="mb-1.5 block text-xs font-semibold text-ink-600">
+                  Assigned to
+                </label>
+                <select
+                  id="assignTo"
+                  name="assignTo"
+                  defaultValue={investor.assigned_to ?? ""}
+                  className="field-input !py-2.5 text-sm"
+                >
+                  <option value="">Unassigned</option>
+                  {listActiveAdmins().map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button type="submit" className="btn-secondary !min-h-[3rem] px-4 text-sm">
+                Save
+              </button>
+            </form>
+          </Panel>
+
           <Panel title="Contact">
             <dl className="divide-y divide-ink-50">
               <SideField label="Email" value={investor.email} href={`mailto:${investor.email}`} />
@@ -362,10 +433,27 @@ export default async function InvestorDetailPage({
                 href={investor.mobile ? `tel:${investor.mobile.replace(/\s+/g, "")}` : undefined}
               />
               <SideField label="Prefers" value={labelFor("contactMethod", investor.contact_method)} />
-              <SideField label="Marketing consent" value={investor.consent_marketing ? "Yes" : "No"} />
+              <SideField
+                label="Marketing consent"
+                value={
+                  investor.unsubscribed_at
+                    ? `Unsubscribed ${formatDateTime(investor.unsubscribed_at)}`
+                    : investor.consent_marketing
+                      ? "Yes"
+                      : "No"
+                }
+              />
               <SideField label="Landing page" value={investor.landing_page || "—"} />
               <SideField label="Last contact" value={formatDateTime(investor.last_contact_at)} />
             </dl>
+            {!investor.unsubscribed_at && (
+              <form action={recordUnsubscribeAction} className="border-t border-ink-50 px-5 py-3">
+                <input type="hidden" name="investorId" value={investorId} />
+                <button type="submit" className="min-h-[2.75rem] text-xs font-medium text-ink-500 underline hover:text-signal-hot">
+                  Record an opt-out (asked by phone or email)
+                </button>
+              </form>
+            )}
           </Panel>
 
           {(investor.utm_campaign || investor.utm_source || investor.referrer) && (
@@ -489,11 +577,15 @@ export default async function InvestorDetailPage({
                 Template
               </label>
               <select id="templateKey" name="templateKey" className="field-input !py-2.5 text-sm">
-                {templates.map((template) => (
-                  <option key={template.key} value={template.key}>
-                    {template.name}
-                  </option>
-                ))}
+                {templates.map((template) => {
+                  const blocked = isMarketingTemplate(template.key) && !mayMarketTo(investorId);
+                  return (
+                    <option key={template.key} value={template.key} disabled={blocked}>
+                      {template.name}
+                      {blocked ? " — no marketing consent" : ""}
+                    </option>
+                  );
+                })}
               </select>
               <button type="submit" className="btn-secondary w-full !min-h-[2.5rem] text-sm">
                 Queue email

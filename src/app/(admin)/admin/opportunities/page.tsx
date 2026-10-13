@@ -15,6 +15,7 @@ import {
   labelFor,
 } from "@/lib/taxonomy";
 import { recomputeAllMatchesAction } from "./actions";
+import { releaseDecision } from "@/lib/release";
 
 export const dynamic = "force-dynamic";
 
@@ -105,13 +106,14 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
               <th scope="col" className="px-4 py-3">Price</th>
               <th scope="col" className="px-4 py-3">Rental / Yield</th>
               <th scope="col" className="px-4 py-3">Availability</th>
+              <th scope="col" className="px-4 py-3">Release</th>
               <th scope="col" className="px-4 py-3">Updated</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-50">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-ink-400">
+                <td colSpan={9} className="px-4 py-12 text-center text-ink-400">
                   No opportunities yet. Add one, or import a stocklist with{" "}
                   <code className="rounded bg-canvas-sunken px-1.5 py-0.5 text-xs">
                     npm run stocklist:import
@@ -161,6 +163,15 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
                     {AVAILABILITY_LABELS[row.availability as keyof typeof AVAILABILITY_LABELS] ??
                       row.availability}
                   </span>
+                </td>
+                <td className="px-4 py-3 text-xs">
+                  {(() => {
+                    const release = releaseDecision(row);
+                    if (!release.canShare) {
+                      return <span className="text-signal-hot" title={release.reason ?? undefined}>Not shareable</span>;
+                    }
+                    return <span className="text-signal-positive">{release.canDisclose ? "Full" : "Summary"}</span>;
+                  })()}
                 </td>
                 <td className="px-4 py-3 text-xs text-ink-500">{formatDate(row.updated_at)}</td>
               </tr>

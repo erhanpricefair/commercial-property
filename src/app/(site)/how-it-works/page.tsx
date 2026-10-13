@@ -73,7 +73,7 @@ export default function HowItWorksPage() {
           </p>
           <div className="mt-9">
             <CtaLink href="/register" location="how_it_works_hero">
-              See Current Opportunities
+              Register Your Criteria
             </CtaLink>
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function HowItWorksPage() {
           <div className="space-y-14 sm:space-y-20">
             {STEPS.map((step) => (
               <div key={step.n} className="grid gap-6 lg:grid-cols-[auto_1fr] lg:gap-12">
-                <p className="font-display text-display-lg leading-none text-brass-200 lg:w-28">
+                <p aria-hidden="true" className="font-display text-display-lg leading-none text-brass-200 lg:w-28">
                   {step.n}
                 </p>
                 <div className="max-w-2xl">

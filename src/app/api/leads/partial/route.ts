@@ -5,6 +5,7 @@ import {
   BUDGETS, FINANCE_STATUSES, LOCATIONS, PRIORITIES, PROPERTY_TYPES, TIMEFRAMES,
 } from "@/lib/taxonomy";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { clientIp, rejectNonJson } from "@/lib/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,10 +43,10 @@ const partialSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "unknown";
+  const notJson = rejectNonJson(request);
+  if (notJson) return notJson;
+
+  const ip = clientIp(request.headers);
 
   // Saves fire on field blur, so the limit is looser than a full submission.
   if (!checkRateLimit(`partial:${ip}`, { limit: 30, windowMs: 10 * 60 * 1000 })) {

@@ -2,6 +2,7 @@ import "server-only";
 import { dueCommunications, markCommunication } from "../repositories/activity";
 import { getDb } from "../db";
 import { SITE } from "../site";
+import { isMarketingTemplate, mayMarketTo, unsubscribeTokenFor } from "../repositories/consent";
 
 /**
  * Drains the queued email in `communications` through whichever provider is
@@ -17,14 +18,14 @@ import { SITE } from "../site";
  * Run it from cron, a scheduled function, or `npm run email:dispatch`.
  */
 
-export type DispatchResult = { attempted: number; sent: number; failed: number };
+export type DispatchResult = { attempted: number; sent: number; failed: number; suppressed: number };
 
 export async function dispatchDueEmails(limit = 25): Promise<DispatchResult> {
   const provider = (process.env.EMAIL_PROVIDER ?? "log").toLowerCase();
   const from = process.env.EMAIL_FROM ?? `${SITE.name} <no-reply@example.com.au>`;
   const queue = dueCommunications(limit).filter((c) => c.channel === "email");
 
-  const result: DispatchResult = { attempted: queue.length, sent: 0, failed: 0 };
+  const result: DispatchResult = { attempted: queue.length, sent: 0, failed: 0, suppressed: 0 };
 
   for (const message of queue) {
     const to = recipientFor(message.investor_id);
@@ -34,15 +35,37 @@ export async function dispatchDueEmails(limit = 25): Promise<DispatchResult> {
       continue;
     }
 
+    // Re-checked at send time, not just when queued: consent can be withdrawn
+    // in the days between queueing the 120-hour email and sending it.
+    if (isMarketingTemplate(message.template_key) && !mayMarketTo(message.investor_id)) {
+      markCommunication(message.id, "cancelled", { error: "No marketing consent, or unsubscribed" });
+      result.suppressed++;
+      continue;
+    }
+
+    const unsubscribeUrl = `${SITE.url}/unsubscribe?t=${unsubscribeTokenFor(message.investor_id)}`;
+
     try {
       await send(provider, {
         from,
         to,
         subject: message.subject ?? "",
-        body: message.body ?? "",
+        body: `${message.body ?? ""}${complianceFooter(unsubscribeUrl)}`,
+        headers: {
+          // RFC 8058 one-click unsubscribe: Gmail and Yahoo require it of
+          // bulk senders, and it shows the unsubscribe button in the client.
+          "List-Unsubscribe": `<${SITE.url}/api/unsubscribe?t=${unsubscribeTokenFor(message.investor_id)}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
       });
-      markCommunication(message.id, "sent", { provider });
-      result.sent++;
+      // Log mode sends nothing. Recording it as "sent" told the admin an
+      // investor had their confirmation when they had not.
+      if (provider === "log" || !["resend", "postmark", "smtp2go", "webhook"].includes(provider)) {
+        markCommunication(message.id, "not_sent", { provider: "log", error: "EMAIL_PROVIDER not configured" });
+      } else {
+        markCommunication(message.id, "sent", { provider });
+        result.sent++;
+      }
     } catch (error) {
       markCommunication(message.id, "failed", {
         provider,
@@ -55,7 +78,26 @@ export async function dispatchDueEmails(limit = 25): Promise<DispatchResult> {
   return result;
 }
 
-type Message = { from: string; to: string; subject: string; body: string };
+type Message = {
+  from: string;
+  to: string;
+  subject: string;
+  body: string;
+  headers: Record<string, string>;
+};
+
+/**
+ * Appended to every outgoing email: who it is from and how to stop it.
+ * Identification of the sender and a functional unsubscribe are both things
+ * an Australian commercial email is expected to carry; the exact wording
+ * should be confirmed by the agency's legal adviser.
+ */
+export function complianceFooter(unsubscribeUrl: string): string {
+  const identity = [SITE.legalName, SITE.abn ? `ABN ${SITE.abn}` : null, SITE.email, SITE.phone || null]
+    .filter(Boolean)
+    .join(" · ");
+  return `\n\n---\nSent by ${identity}.\nYou are receiving this because you contacted us through ${SITE.url}.\nUnsubscribe from marketing emails: ${unsubscribeUrl}\n`;
+}
 
 async function send(provider: string, message: Message): Promise<void> {
   switch (provider) {
@@ -67,6 +109,7 @@ async function send(provider: string, message: Message): Promise<void> {
         to: [message.to],
         subject: message.subject,
         text: message.body,
+        headers: message.headers,
       });
       return;
 
@@ -80,6 +123,7 @@ async function send(provider: string, message: Message): Promise<void> {
         Subject: message.subject,
         TextBody: message.body,
         MessageStream: process.env.POSTMARK_STREAM ?? "outbound",
+        Headers: Object.entries(message.headers).map(([Name, Value]) => ({ Name, Value })),
       });
       return;
 
@@ -90,6 +134,7 @@ async function send(provider: string, message: Message): Promise<void> {
         to: [message.to],
         subject: message.subject,
         text_body: message.body,
+        custom_headers: Object.entries(message.headers).map(([header, value]) => ({ header, value })),
       });
       return;
 

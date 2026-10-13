@@ -9,6 +9,11 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  // HTTPS only, once deployed. No includeSubDomains: the agency's other
+  // subdomains (mail, a CRM portal) are not ours to force onto HTTPS.
+  ...(process.env.NODE_ENV === "production"
+    ? [{ key: "Strict-Transport-Security", value: "max-age=31536000" }]
+    : []),
 ];
 
 const nextConfig: NextConfig = {

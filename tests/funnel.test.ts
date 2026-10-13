@@ -98,3 +98,13 @@ describe("completion rate", () => {
     assert.equal(completionRate(0, 0), 0);
   });
 });
+
+describe("funnel gaps", () => {
+  test("a gap in the data is not reported as everyone dropping off later", () => {
+    // Nobody recorded at step 3 (old data, or a lost beacon): step 4 must not
+    // be measured against all 100 starters.
+    const steps = computeFunnelSteps(100, new Map([[2, 80], [4, 10]]));
+    assert.equal(steps[3].dropOff, 0);
+    assert.equal(steps[3].dropOffPct, 0);
+  });
+});

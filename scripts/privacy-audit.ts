@@ -18,6 +18,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { getDb } from "../src/lib/db.ts";
+import { releaseDecision, type ReleaseFields } from "../src/lib/release.ts";
 
 const baseUrl = process.argv[2]?.replace(/\/$/, "");
 
@@ -134,8 +135,15 @@ const BANNED = [
   { label: "\"secret stocklist\"", pattern: /secret\s+stock\s?list/i },
 ];
 
-const contentFiles = [...walk("lib/content"), ...publicRoutes, ...walk("components")]
-  .filter((f) => /\.(ts|tsx)$/.test(f) && !f.includes(`components${path.sep}admin`));
+// Email templates and social posts reach the public too — an investor's inbox
+// and an Instagram feed are as public as a web page.
+const outboundCopy = ["lib/email/templates.ts"].flatMap(walk);
+const socialCopy = ["social/POST-THESE.md", "scripts/make-social.ts"]
+  .map((f) => path.join(process.cwd(), f))
+  .filter((f) => fs.existsSync(f));
+const contentFiles = [...walk("lib/content"), ...publicRoutes, ...walk("components"), ...outboundCopy]
+  .filter((f) => /\.(ts|tsx)$/.test(f) && !f.includes(`components${path.sep}admin`))
+  .concat(socialCopy);
 
 for (const { label, pattern } of BANNED) {
   const hits = contentFiles.filter((f) => pattern.test(stripComments(fs.readFileSync(f, "utf8"))));
@@ -192,6 +200,44 @@ if (weakTokens.c > 0) {
   fail("Presentation tokens are long and random", `${weakTokens.c} token(s) shorter than 32 characters`);
 } else {
   pass("Presentation tokens are long and random");
+}
+
+/**
+ * Builder / partner release approval. The presentation page already refuses
+ * to render a link whose approval doesn't cover it, so these are warnings:
+ * they mean an investor is holding a link that will 404, or the record of who
+ * approved a disclosure is missing.
+ */
+const liveLinks = db
+  .prepare(
+    `SELECT p.id, p.disclose_identity, o.reference, o.availability, o.release_approval,
+            o.release_approved_by, o.release_approval_ref, o.release_approval_expires
+       FROM presentations p JOIN opportunities o ON o.id = p.opportunity_id
+      WHERE p.revoked_at IS NULL
+        AND (p.expires_at IS NULL OR datetime(p.expires_at) > datetime('now'))`,
+  )
+  .all() as ({ id: number; disclose_identity: number; reference: string } & ReleaseFields)[];
+const unapproved = liveLinks.filter((l) => !releaseDecision(l).canShare);
+const overDisclosed = liveLinks.filter(
+  (l) => l.disclose_identity === 1 && releaseDecision(l).canShare && !releaseDecision(l).canDisclose,
+);
+if (unapproved.length) {
+  warn(
+    "Every unrevoked private link is covered by builder / partner release approval",
+    `${unapproved.length} link(s) are blocked (shown as 404) until approval is recorded or they are revoked: ` +
+      unapproved.map((l) => `#${l.id} (${l.reference})`).join(", "),
+  );
+} else {
+  pass(`Every unrevoked private link is covered by release approval (${liveLinks.length} live)`);
+}
+if (overDisclosed.length) {
+  warn(
+    "No link was issued with identity disclosure beyond the recorded approval",
+    `${overDisclosed.length} link(s) asked for full disclosure but approval is summary only — identity is being withheld: ` +
+      overDisclosed.map((l) => `#${l.id} (${l.reference})`).join(", "),
+  );
+} else {
+  pass("No link discloses identity beyond the recorded approval");
 }
 
 const noAdmins = (db.prepare("SELECT COUNT(*) AS c FROM admin_users WHERE is_active = 1").get() as { c: number }).c;

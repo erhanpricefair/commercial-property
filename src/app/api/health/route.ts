@@ -11,19 +11,21 @@ export const dynamic = "force-dynamic";
  * volume is not healthy — and that is exactly the failure mode to catch when
  * SQLite lives on a mount.
  *
- * Returns no private data: a count, not a record.
+ * Says nothing else. It used to return the number of investor records, which
+ * told any passer-by how many leads the business holds, and the raw database
+ * error on failure, which can carry file paths. Neither is needed to decide
+ * whether to route traffic here.
  */
 export async function GET() {
   try {
-    const db = getDb();
-    const { c } = db.prepare("SELECT COUNT(*) AS c FROM investors").get() as { c: number };
+    getDb().prepare("SELECT 1").get();
     return NextResponse.json(
-      { ok: true, database: "connected", investors: c, at: new Date().toISOString() },
+      { ok: true },
       { headers: { "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" } },
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "unavailable" },
+      { ok: false },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }

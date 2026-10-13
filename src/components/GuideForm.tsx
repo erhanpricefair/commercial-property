@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { CONVERSION_EVENTS, trackEvent } from "@/lib/analytics";
+import { attributionPayload, captureAttribution } from "@/lib/attribution";
 
 /**
  * Lead magnet capture. Two fields only — the guide is the value exchange, and
@@ -14,6 +16,13 @@ export default function GuideForm({ source = "guide_page" }: { source?: string }
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState(""); // honeypot
+  const [consentMarketing, setConsentMarketing] = useState(false);
+
+  // Paid traffic lands here too; without this a guide lead from an ad was
+  // recorded with no campaign at all.
+  useEffect(() => {
+    captureAttribution();
+  }, []);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -37,11 +46,12 @@ export default function GuideForm({ source = "guide_page" }: { source?: string }
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          ...attributionPayload(source),
           firstName,
           email,
           company,
+          consentMarketing,
           source,
-          landingPage: window.location.pathname,
         }),
       });
       const data = (await response.json()) as { ok?: boolean; errors?: Record<string, string>; error?: string };
@@ -74,8 +84,9 @@ export default function GuideForm({ source = "guide_page" }: { source?: string }
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           aria-invalid={Boolean(errors.firstName)}
+          aria-describedby={errors.firstName ? "guide-firstName-error" : undefined}
         />
-        {errors.firstName && <p className="field-error">{errors.firstName}</p>}
+        {errors.firstName && <p id="guide-firstName-error" className="field-error">{errors.firstName}</p>}
       </div>
 
       <div>
@@ -92,9 +103,23 @@ export default function GuideForm({ source = "guide_page" }: { source?: string }
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           aria-invalid={Boolean(errors.email)}
+          aria-describedby={errors.email ? "guide-email-error" : undefined}
         />
-        {errors.email && <p className="field-error">{errors.email}</p>}
+        {errors.email && <p id="guide-email-error" className="field-error">{errors.email}</p>}
       </div>
+
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-ink-100 bg-canvas-sunken p-4">
+        <input
+          type="checkbox"
+          className="mt-0.5 h-5 w-5 shrink-0 rounded border-ink-300"
+          checked={consentMarketing}
+          onChange={(e) => setConsentMarketing(e.target.checked)}
+        />
+        <span className="text-sm leading-relaxed text-ink-600">
+          Also send me general commercial property information by email. Optional — you can
+          unsubscribe at any time.
+        </span>
+      </label>
 
       <div aria-hidden="true" className="absolute h-0 w-0 overflow-hidden opacity-0">
         <label htmlFor="guide-company">Company</label>
@@ -119,9 +144,9 @@ export default function GuideForm({ source = "guide_page" }: { source?: string }
       </button>
 
       <p className="text-xs leading-relaxed text-ink-400">
-        We&rsquo;ll email you a link to the guide. No obligation, and you can unsubscribe at any
-        time. Information provided is general in nature and does not constitute financial, legal or
-        investment advice.
+        We&rsquo;ll email you a link to the guide. We use your details as described in our{" "}
+        <Link href="/privacy" className="underline">Privacy Policy</Link>. Information provided is
+        general in nature and does not constitute financial, legal or investment advice.
       </p>
     </form>
   );

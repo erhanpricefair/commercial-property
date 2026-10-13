@@ -18,6 +18,12 @@ Go to forms.google.com, make a form with the questions below, hit Send → link 
 copy. Put that link in your Instagram bio and directly in Facebook posts.
 Answers land in a Google Sheet you own.
 
+Before you share it: the form is collecting personal information, so it needs
+the same collection notice the website gives — who you are, why you're asking,
+a link to your privacy policy, and a separate, unticked box for marketing
+email. Google stores responses overseas; your privacy policy has to say so.
+Have the agency's legal adviser check the wording.
+
 **Better once you're running ads — Meta Lead Ads.** The form opens inside
 Facebook or Instagram, so nobody leaves the app and you need no website at all.
 Set up in Ads Manager → Lead generation. Download leads as CSV, or connect them
@@ -84,11 +90,10 @@ Add this line at the bottom of the form:
 
 **Image:** `02-entry-price-square.png`
 
-> "I assumed commercial property started around a million."
+> Commercial property doesn't always start around a million.
 >
-> It's the most common thing we hear. Smaller commercial and storage-style
-> assets can sit well below that — a lot closer to what people expect to pay for
-> a residential investment.
+> Smaller commercial and storage-style assets can sit well below that — in some
+> cases closer to the price of a residential investment.
 >
 > Whether that suits you depends on your objectives and the specific property.
 > But it's worth knowing the option exists before you rule the whole sector out.
@@ -162,6 +167,10 @@ way to get a tappable link on Instagram without paying.
 **Replies.** Anyone who comments or DMs asking a question is a lead. Answer the
 question, then ask what they're looking for. That conversation converts better
 than anything on this page.
+
+**Identify the agency.** Every post and image should carry the agency's name
+(and anything else your licensing obligations require on advertising — check
+with the principal before the first post).
 
 **What not to do.** Don't post a specific property, a price for one, a
 development name, or anything about a return. Beyond the compliance problem, it

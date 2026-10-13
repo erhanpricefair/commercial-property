@@ -1,6 +1,7 @@
 import "server-only";
 import { getDb } from "../db";
 import { PIPELINE_ORDER, type LeadStatus } from "../taxonomy";
+import { melbourneDayStartUtc } from "../time";
 
 /** Aggregates for the admin dashboard. Admin-only, like everything here. */
 
@@ -30,7 +31,8 @@ export function getDashboardStats(): DashboardStats {
   const byStatus = new Map(pipelineCounts.map((r) => [r.status, r.c]));
 
   return {
-    todayLeads: one<number>("SELECT COUNT(*) AS v FROM investors WHERE date(created_at) = date('now')"),
+    // "Today" is the Melbourne day, not the UTC one.
+    todayLeads: one<number>("SELECT COUNT(*) AS v FROM investors WHERE created_at >= ?", melbourneDayStartUtc()),
     weekLeads: one<number>("SELECT COUNT(*) AS v FROM investors WHERE created_at >= datetime('now','-7 days')"),
     totalLeads: one<number>("SELECT COUNT(*) AS v FROM investors"),
     hotLeads: one<number>("SELECT COUNT(*) AS v FROM investors WHERE classification = 'HOT' AND status NOT IN ('converted','not_suitable')"),
@@ -49,7 +51,7 @@ export function getDashboardStats(): DashboardStats {
     availableOpportunities: one<number>("SELECT COUNT(*) AS v FROM opportunities WHERE availability = 'available'"),
     activePresentations: one<number>(
       `SELECT COUNT(*) AS v FROM presentations
-        WHERE revoked_at IS NULL AND (expires_at IS NULL OR expires_at > datetime('now'))`,
+        WHERE revoked_at IS NULL AND (expires_at IS NULL OR datetime(expires_at) > datetime('now'))`,
     ),
     pipeline: PIPELINE_ORDER.map((status) => ({
       status,
@@ -87,8 +89,8 @@ const DASHBOARD_SELECT = `
 
 export function todaysLeads(limit = 10): DashboardInvestor[] {
   return getDb()
-    .prepare(`${DASHBOARD_SELECT} WHERE date(i.created_at) = date('now') ORDER BY i.created_at DESC LIMIT ?`)
-    .all(limit) as DashboardInvestor[];
+    .prepare(`${DASHBOARD_SELECT} WHERE i.created_at >= ? ORDER BY i.created_at DESC LIMIT ?`)
+    .all(melbourneDayStartUtc(), limit) as DashboardInvestor[];
 }
 
 export function hotLeads(limit = 10): DashboardInvestor[] {

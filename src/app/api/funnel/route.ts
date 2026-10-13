@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { recordFunnelEvent } from "@/lib/repositories/funnel";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { clientIp, rejectNonJson } from "@/lib/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,10 +23,10 @@ const schema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "unknown";
+  const notJson = rejectNonJson(request);
+  if (notJson) return notJson;
+
+  const ip = clientIp(request.headers);
 
   if (!checkRateLimit(`funnel:${ip}`, { limit: 60, windowMs: 10 * 60 * 1000 })) {
     return NextResponse.json({ ok: true });

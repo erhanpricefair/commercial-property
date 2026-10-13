@@ -172,7 +172,7 @@ export default function CampaignPage({ campaign }: { campaign: Campaign }) {
             ].map((step, i) => (
               <li key={step.t}>
                 <div className="flex items-baseline gap-3">
-                  <span className="font-display text-display-sm text-brass-500">
+                  <span className="font-display text-display-sm text-brass-600">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="h-px flex-1 bg-ink-100" aria-hidden="true" />
@@ -234,9 +234,9 @@ export default function CampaignPage({ campaign }: { campaign: Campaign }) {
               {SITE.abn ? ` · ABN ${SITE.abn}` : ""}
             </p>
             <div className="flex flex-wrap gap-x-5 gap-y-2">
-              <Link href="/privacy" className="hover:text-ink-700">Privacy Policy</Link>
-              <Link href="/disclaimer" className="hover:text-ink-700">Disclaimer</Link>
-              <Link href="/terms" className="hover:text-ink-700">Terms</Link>
+              <Link href="/privacy" className="inline-flex min-h-[44px] items-center hover:text-ink-700">Privacy Policy</Link>
+              <Link href="/disclaimer" className="inline-flex min-h-[44px] items-center hover:text-ink-700">Disclaimer</Link>
+              <Link href="/terms" className="inline-flex min-h-[44px] items-center hover:text-ink-700">Terms</Link>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { CONVERSION_EVENTS, trackEvent } from "@/lib/analytics";
 
 export default function ContactForm() {
@@ -175,6 +176,10 @@ export default function ContactForm() {
       <button type="submit" disabled={state === "sending"} className="btn-primary w-full">
         {state === "sending" ? "Sending…" : "Send message"}
       </button>
+      <p className="text-xs leading-relaxed text-ink-400">
+        We use your details to respond to your enquiry, as described in our{" "}
+        <Link href="/privacy" className="underline">Privacy Policy</Link>.
+      </p>
     </form>
   );
 }

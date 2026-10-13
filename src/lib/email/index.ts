@@ -3,6 +3,7 @@ import { getDb } from "../db";
 import { queueCommunication } from "../repositories/activity";
 import { EMAIL_TEMPLATE_SEEDS, renderTemplate } from "./templates";
 import { SITE } from "../site";
+import { isMarketingTemplate, mayMarketTo } from "../repositories/consent";
 
 export type EmailTemplateRow = {
   id: number;
@@ -68,6 +69,10 @@ export type MergeVars = Record<string, string | null | undefined>;
  */
 export function queueRegistrationSequence(investorId: number, vars: MergeVars): void {
   ensureEmailTemplates();
+  // Marketing steps only go to someone who ticked the consent box. The form
+  // promises "You can unsubscribe at any time" next to that box; sending the
+  // nurture emails to people who left it unticked contradicted it.
+  const marketingAllowed = mayMarketTo(investorId);
   const templates = getDb()
     .prepare(
       `SELECT * FROM email_templates
@@ -78,6 +83,10 @@ export function queueRegistrationSequence(investorId: number, vars: MergeVars): 
     .all() as EmailTemplateRow[];
 
   for (const t of templates) {
+    if (isMarketingTemplate(t.key) && !marketingAllowed) continue;
+    // A returning registrant gets a fresh confirmation, not the whole nurture
+    // sequence a second time.
+    if (isMarketingTemplate(t.key) && hasQueuedOrSent(investorId, t.key)) continue;
     queueCommunication({
       investorId,
       channel: "email",
@@ -92,6 +101,7 @@ export function queueRegistrationSequence(investorId: number, vars: MergeVars): 
 export function queueSingleEmail(investorId: number, key: string, vars: MergeVars): boolean {
   const t = getEmailTemplate(key);
   if (!t || t.is_active !== 1) return false;
+  if (isMarketingTemplate(t.key) && !mayMarketTo(investorId)) return false;
   queueCommunication({
     investorId,
     channel: "email",
@@ -101,6 +111,16 @@ export function queueSingleEmail(investorId: number, key: string, vars: MergeVar
     scheduledFor: scheduledFor(t.delay_hours),
   });
   return true;
+}
+
+function hasQueuedOrSent(investorId: number, key: string): boolean {
+  return Boolean(
+    getDb()
+      .prepare(
+        "SELECT 1 FROM communications WHERE investor_id = ? AND template_key = ? AND status IN ('queued','sent') LIMIT 1",
+      )
+      .get(investorId, key),
+  );
 }
 
 export function baseMergeVars(): MergeVars {

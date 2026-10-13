@@ -7,6 +7,7 @@ import {
   PROPERTY_TYPE_OPTIONS,
 } from "@/lib/taxonomy";
 import type { OpportunityRow } from "@/lib/repositories/opportunities";
+import { RELEASE_LABELS, RELEASE_LEVELS } from "@/lib/release";
 
 /**
  * Private opportunity editor.
@@ -67,6 +68,31 @@ export default function OpportunityForm({
         </div>
       </fieldset>
 
+      <fieldset className="rounded-xl border border-ink-100 bg-canvas-raised p-5">
+        <legend className="px-2 text-xs font-semibold uppercase tracking-wider text-ink-500">
+          Builder / partner release approval
+        </legend>
+        <p className="mb-4 text-xs leading-relaxed text-ink-500">
+          No private link can be created, or viewed, unless the builder or channel partner has cleared
+          this property for release and you have recorded who approved it and the evidence. Withdrawing
+          approval, letting it expire, or marking the property sold or withdrawn takes every existing
+          link down immediately.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Select name="release_approval" label="Approval" defaultValue={o?.release_approval ?? "none"}
+            options={RELEASE_LEVELS.map((level) => ({ value: level, label: RELEASE_LABELS[level] }))} />
+          <Text name="release_approval_expires" label="Approval expires (optional)" type="date"
+            defaultValue={o?.release_approval_expires ?? ""} />
+          <Text name="release_approved_by" label="Approved by (name, company)"
+            defaultValue={o?.release_approved_by ?? ""} placeholder="e.g. J. Citizen, Builder Pty Ltd" />
+          <Text name="release_approval_ref" label="Evidence"
+            defaultValue={o?.release_approval_ref ?? ""} placeholder="e.g. Email 12/10/2026 — saved to deal file" />
+        </div>
+        {o?.release_recorded_at && (
+          <p className="mt-3 text-xs text-ink-400">Approval last recorded {o.release_recorded_at} UTC.</p>
+        )}
+      </fieldset>
+
       <fieldset className="rounded-xl border-2 border-dashed border-brass-200 bg-brass-100/40 p-5">
         <legend className="flex items-center gap-2 px-2 text-xs font-bold uppercase tracking-wider text-brass-600">
           <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -78,7 +104,8 @@ export default function OpportunityForm({
         <p className="mb-4 text-xs leading-relaxed text-brass-600">
           These fields never appear on the public website, in any public API response, in the sitemap
           or in schema markup. They are only released on a private presentation link where you have
-          explicitly ticked &ldquo;disclose identity&rdquo;.
+          explicitly ticked &ldquo;disclose identity&rdquo; <em>and</em> the recorded approval covers full
+          disclosure.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <Text name="developer" label="Developer" defaultValue={o?.developer ?? ""} />

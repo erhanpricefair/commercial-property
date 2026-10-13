@@ -1,19 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { contactSchema, flattenIssues } from "@/lib/validation";
 import { getDb } from "@/lib/db";
-import { logActivity } from "@/lib/repositories/activity";
+import { logActivity, queueCommunication } from "@/lib/repositories/activity";
+import { findInvestorByEmail } from "@/lib/repositories/investors";
 import { dispatchLeadEvent } from "@/lib/integrations";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { clientIp, rejectNonJson } from "@/lib/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** PUBLIC endpoint — write-only general enquiry capture. */
 export async function POST(request: NextRequest) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "unknown";
+  const notJson = rejectNonJson(request);
+  if (notJson) return notJson;
+
+  const ip = clientIp(request.headers);
 
   if (!checkRateLimit(`contact:${ip}`, { limit: 5, windowMs: 10 * 60 * 1000 })) {
     return NextResponse.json(
@@ -41,6 +43,34 @@ export async function POST(request: NextRequest) {
   if (input.company) return NextResponse.json({ ok: true });
 
   const db = getDb();
+  const existing = findInvestorByEmail(input.email);
+  if (existing) {
+    // Same person, new message: keep it on their record, bring them back to
+    // the top of the follow-up queue, and don't create a second lead.
+    queueCommunication({
+      investorId: existing.id,
+      channel: "email",
+      direction: "inbound",
+      subject: "Website enquiry",
+      body: input.message,
+      status: "logged",
+    });
+    db.prepare(
+      `UPDATE investors
+          SET next_followup_at = CASE
+                WHEN next_followup_at IS NULL OR next_followup_at > datetime('now', '+1 days')
+                THEN datetime('now', '+1 days') ELSE next_followup_at END,
+              status = CASE WHEN status IN ('nurture','not_suitable') THEN 'new' ELSE status END,
+              updated_at = datetime('now')
+        WHERE id = ?`,
+    ).run(existing.id);
+    logActivity(existing.id, "contact_request", "Sent a general enquiry", {
+      landingPage: input.landingPage ?? null,
+      returning: true,
+    });
+    return NextResponse.json({ ok: true });
+  }
+
   const investorId = Number(
     db
       .prepare(

@@ -88,7 +88,7 @@ export default function HomePage() {
 
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <a href="#register" className="btn-primary">
-                  See Current Opportunities
+                  Register Your Criteria
                 </a>
                 <Link href="/how-it-works" className="btn-secondary">
                   How It Works
@@ -254,7 +254,7 @@ export default function HomePage() {
                   ]}
                 />
               </div>
-              <p className="mt-6 border-t border-ink-700 pt-5 text-xs leading-relaxed text-ink-400">
+              <p className="mt-6 border-t border-ink-700 pt-5 text-xs leading-relaxed text-ink-300">
                 We use your criteria only to identify opportunities that may be relevant to you. You
                 can update or withdraw your criteria at any time.
               </p>
@@ -277,7 +277,7 @@ export default function HomePage() {
             {STEPS.map((step, i) => (
               <li key={step.title} className="relative">
                 <div className="flex items-baseline gap-3">
-                  <span className="font-display text-display-sm text-brass-500">
+                  <span className="font-display text-display-sm text-brass-600">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="h-px flex-1 bg-ink-100" aria-hidden="true" />
@@ -342,7 +342,7 @@ export default function HomePage() {
 
           <div className="mt-10 flex justify-center">
             <CtaLink href="/register" location="qualification_teaser">
-              See Current Opportunities
+              Register Your Criteria
             </CtaLink>
           </div>
         </div>

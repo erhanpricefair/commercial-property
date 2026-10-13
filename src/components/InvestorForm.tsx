@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   BUDGET_OPTIONS,
@@ -169,15 +170,48 @@ export default function InvestorForm({
     });
   }, []);
 
+  /**
+   * The source label every funnel event for this form is filed under.
+   *
+   * Start and step events used the component's `source` while the completion
+   * event used the UTM source, so on exactly the traffic that matters (paid
+   * campaigns) the by-source table compared starts under one name with
+   * completions under another and showed 0% for both.
+   */
+  const funnelSource = source ?? "website";
+
+  /**
+   * Each step is reported the FIRST time it is reached, once per form session.
+   * Reporting on every forward move counted Back-then-Continue twice, which let
+   * a later step show more visitors than the one before it.
+   */
+  const reachedRef = useRef(new Set<number>());
+  const reportStep = useCallback(
+    (stepNumber: number) => {
+      if (reachedRef.current.has(stepNumber)) return;
+      reachedRef.current.add(stepNumber);
+      trackEvent(CONVERSION_EVENTS.investorFormStep, { step: stepNumber });
+      // Server-side too, so drop-off is visible in the admin without
+      // depending on a third-party analytics account.
+      beacon("/api/funnel", {
+        event: "form_step",
+        step: stepNumber,
+        source: funnelSource,
+        landingPage: typeof window !== "undefined" ? window.location.pathname : undefined,
+      });
+    },
+    [funnelSource],
+  );
+
   /** Fires once, the first time the visitor interacts with the form. */
   const markStarted = useCallback(() => {
     if (startedRef.current) return;
     startedRef.current = true;
-    const attribution = attributionPayload(source ?? "website");
+    const attribution = attributionPayload(funnelSource);
     beacon("/api/funnel", {
       event: "form_start",
       step: 1,
-      source: source ?? "website",
+      source: funnelSource,
       landingPage: attribution.landingPage,
     });
     trackEvent(CONVERSION_EVENTS.investorFormStart, {
@@ -186,7 +220,11 @@ export default function InvestorForm({
       ad_content: attribution.utmContent,
       landing_page: attribution.landingPage,
     });
-  }, [source]);
+    // A campaign page that pre-answers questions opens the form part-way in.
+    // Those steps were reached (the ad answered them); without reporting them
+    // the funnel showed a 100% drop-off at "Budget" for all prefilled traffic.
+    for (let n = 2; n <= firstUnanswered + 1; n++) reportStep(n);
+  }, [funnelSource, firstUnanswered, reportStep]);
 
   // Move focus to the new question so screen readers and keyboard users follow
   // the step change, and scroll the card back into view on small screens.
@@ -196,23 +234,15 @@ export default function InvestorForm({
     headingRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [step, firstUnanswered]);
 
+  // Side effects live outside the state updater (React may run an updater
+  // twice), and the step is read from this render, so two quick taps on a
+  // single-select answer can't skip a question.
   const goNext = useCallback(() => {
-    setStep((s) => {
-      const next = Math.min(TOTAL_STEPS - 1, s + 1);
-      if (next !== s) {
-        trackEvent(CONVERSION_EVENTS.investorFormStep, { step: next + 1 });
-        // Server-side too, so drop-off is visible in the admin without
-        // depending on a third-party analytics account.
-        beacon("/api/funnel", {
-          event: "form_step",
-          step: next + 1,
-          source: source ?? "website",
-          landingPage: typeof window !== "undefined" ? window.location.pathname : undefined,
-        });
-      }
-      return next;
-    });
-  }, [source]);
+    const next = Math.min(TOTAL_STEPS - 1, step + 1);
+    if (next === step) return;
+    setStep(next);
+    reportStep(next + 1);
+  }, [reportStep, step]);
 
   const goBack = useCallback(() => setStep((s) => Math.max(0, s - 1)), []);
 
@@ -332,11 +362,11 @@ export default function InvestorForm({
           return;
         }
 
-        const attribution = attributionPayload(source ?? "website");
+        const attribution = attributionPayload(funnelSource);
         beacon("/api/funnel", {
           event: "form_complete",
           step: TOTAL_STEPS,
-          source: attribution.source,
+          source: funnelSource,
           landingPage: attribution.landingPage,
         });
         trackEvent(CONVERSION_EVENTS.investorFormComplete, {
@@ -356,7 +386,7 @@ export default function InvestorForm({
         setSubmitting(false);
       }
     },
-    [form, router, source, submitting, validateFinalStep],
+    [form, funnelSource, router, source, submitting, validateFinalStep],
   );
 
   const canContinue = useMemo(() => {
@@ -754,6 +784,12 @@ function ContactStep({
           email. You can unsubscribe at any time.
         </span>
       </label>
+
+      <p className="text-xs leading-relaxed text-ink-400">
+        We use these details to contact you about opportunities that may suit your criteria, as
+        described in our{" "}
+        <Link href="/privacy" className="underline">Privacy Policy</Link>.
+      </p>
 
       {/* Honeypot — hidden from people, irresistible to bots. */}
       <div aria-hidden="true" className="absolute h-0 w-0 overflow-hidden opacity-0">

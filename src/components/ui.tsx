@@ -128,7 +128,7 @@ export function CtaBand({
               </Link>
             )}
           </div>
-          <p className="mt-6 text-xs text-ink-400">
+          <p className="mt-6 text-xs text-ink-300">
             No obligation to purchase. {DISCLAIMER_SHORT}
           </p>
         </div>
@@ -172,7 +172,7 @@ export function Breadcrumbs({ items }: { items: { href?: string; label: string }
         {items.map((item, i) => (
           <li key={i} className="flex items-center gap-1.5">
             {item.href ? (
-              <Link href={item.href} className="hover:text-ink-700">
+              <Link href={item.href} className="inline-flex min-h-[44px] items-center hover:text-ink-700">
                 {item.label}
               </Link>
             ) : (

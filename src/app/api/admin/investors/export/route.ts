@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   const headers = [
     "id", "first_name", "last_name", "email", "mobile", "preferred_contact",
     "property_type", "budget", "location", "suburb", "finance_status", "timeframe",
-    "lead_score", "classification", "status", "match_count", "source",
+    "lead_score", "classification", "status", "owner", "marketing_consent", "match_count", "source",
     "utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term",
     "click_id", "referrer",
     "registered", "last_contact", "next_followup",
@@ -68,6 +68,8 @@ export async function GET(request: NextRequest) {
         row.lead_score,
         row.classification,
         row.status,
+        row.owner_name ?? "",
+        row.unsubscribed_at ? "unsubscribed" : row.consent_marketing ? "yes" : "no",
         row.match_count,
         row.source ?? "",
         row.utm_source ?? "",

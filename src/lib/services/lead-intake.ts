@@ -1,7 +1,9 @@
 import "server-only";
 import { createInvestor, findInvestorByEmail } from "../repositories/investors";
-import { recomputeMatchesForInvestor } from "../repositories/opportunities";
-import { logActivity } from "../repositories/activity";
+import { presentationForEnquiry, recomputeMatchesForInvestor } from "../repositories/opportunities";
+import { logActivity, queueCommunication } from "../repositories/activity";
+import { advanceInvestorStatus, reRegisterInvestor } from "../repositories/investors";
+import { grantConsent } from "../repositories/consent";
 import { queueRegistrationSequence, baseMergeVars } from "../email";
 import { dispatchLeadEvent } from "../integrations";
 import { notifyOwnerOfHotLead } from "../alerts";
@@ -31,10 +33,17 @@ export type IntakeResult = {
 
 export function registerInvestor(input: LeadInput): IntakeResult {
   // A repeat registration from the same email is a real signal, not an error —
-  // record it as a fresh set of criteria and note the duplication internally.
+  // record it as a fresh set of criteria on the existing person, not as a
+  // second lead for someone else to call.
   const existing = findInvestorByEmail(input.email);
 
-  const { investorId, classification } = createInvestor(input);
+  const { investorId, classification } = existing
+    ? reRegisterInvestor(existing.id, input)
+    : createInvestor(input);
+
+  // A ticked box on this submission is fresh, express consent and outranks an
+  // earlier unsubscribe. An unticked box never removes consent given before.
+  if (existing && input.consentMarketing) grantConsent(investorId);
 
   // The same person shouldn't appear as both a completed registration and an
   // unfinished one to chase.
@@ -46,7 +55,13 @@ export function registerInvestor(input: LeadInput): IntakeResult {
     }
   }
 
-  logActivity(investorId, "investor_registered", "Investor registered via the qualification form", {
+  logActivity(
+    investorId,
+    existing ? "investor_reregistered" : "investor_registered",
+    existing
+      ? "Registered again with updated criteria"
+      : "Investor registered via the qualification form",
+    {
     source: input.source ?? "website",
     landingPage: input.landingPage ?? null,
     utmCampaign: input.utmCampaign || null,
@@ -55,7 +70,7 @@ export function registerInvestor(input: LeadInput): IntakeResult {
     budget: input.budget,
     locationScope: input.locationScope,
     timeframe: input.timeframe,
-    duplicateOf: existing?.id ?? null,
+    returning: Boolean(existing),
   });
 
   // Matching is a convenience for the admin, never a reason to fail the lead.
@@ -136,4 +151,41 @@ export function registerInvestor(input: LeadInput): IntakeResult {
     investorId,
     leadCategory: classification.toLowerCase() as Lowercase<LeadClassification>,
   };
+}
+
+/**
+ * Enquiry lodged through a private presentation link.
+ *
+ * Lives here, not in the route, for the same reason as `registerInvestor`:
+ * resolving the token means touching the opportunity repository, and a
+ * public route must not hold that import. Returns nothing at all — the caller
+ * answers identically whether the token was valid or not, so the endpoint
+ * cannot be used to probe which links exist or are still approved.
+ */
+export function recordPresentationEnquiry(token: string, rawMessage: unknown): void {
+  const presentation = presentationForEnquiry(token);
+  if (!presentation) return;
+
+  const message = String(rawMessage ?? "").trim().slice(0, 2000);
+  const meta = { presentationId: presentation.id, opportunityId: presentation.opportunityId };
+
+  if (presentation.investorId) {
+    logActivity(
+      presentation.investorId,
+      "presentation_enquiry",
+      message || "Registered interest from a private presentation",
+      meta,
+    );
+    queueCommunication({
+      investorId: presentation.investorId,
+      channel: "email",
+      direction: "inbound",
+      subject: "Enquiry from private opportunity presentation",
+      body: message || "(no message)",
+      status: "logged",
+    });
+    advanceInvestorStatus(presentation.investorId, "inspection_discussion");
+  } else {
+    logActivity(null, "presentation_enquiry_anonymous", message || "Interest registered", meta);
+  }
 }

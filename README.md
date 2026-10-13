@@ -14,7 +14,7 @@ sitemap entry or schema block can reach the opportunity database.**
 TRAFFIC (SEO / Google / social)
    ↓
 GENERIC COMMERCIAL INVESTMENT LANDING PAGE
-   ↓  "See Current Opportunities"
+   ↓  "Register Your Criteria"
 INVESTOR QUALIFICATION FORM  (7 steps, mobile-first)
    ↓
 LEAD CREATED  →  LEAD SCORED (0–100, HOT / WARM / NURTURE)

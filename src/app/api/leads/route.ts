@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { leadSchema, flattenIssues } from "@/lib/validation";
 import { registerInvestor } from "@/lib/services/lead-intake";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { clientIp, rejectNonJson } from "@/lib/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,10 +20,10 @@ export const dynamic = "force-dynamic";
  * return type cannot carry opportunity data.
  */
 export async function POST(request: NextRequest) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "unknown";
+  const notJson = rejectNonJson(request);
+  if (notJson) return notJson;
+
+  const ip = clientIp(request.headers);
 
   if (!checkRateLimit(`leads:${ip}`, { limit: 5, windowMs: 10 * 60 * 1000 })) {
     return NextResponse.json(

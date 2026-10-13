@@ -26,6 +26,9 @@ export type InvestorRow = {
   utm_term: string | null;
   click_id: string | null;
   referrer: string | null;
+  unsubscribed_at: string | null;
+  unsubscribe_token: string | null;
+  assigned_to: number | null;
   created_at: string;
   updated_at: string;
   last_contact_at: string | null;
@@ -131,6 +134,86 @@ export function createInvestor(input: LeadInput): {
   return { investorId, score, classification };
 }
 
+/**
+ * A registration from an email that is already on file.
+ *
+ * Recorded as a fresh set of criteria on the SAME investor — the new
+ * preferences row becomes current, the lead is re-scored, and contact details
+ * are refreshed — rather than as a second investor. Two rows for one person
+ * meant two HOT alerts, two email sequences and two agents calling the same
+ * number.
+ *
+ * Attribution is left alone: first touch wins, as it does on the client. A
+ * lead parked as nurture or not-suitable comes back to "new", because coming
+ * back is the signal; a converted client keeps their status.
+ */
+export function reRegisterInvestor(
+  id: number,
+  input: LeadInput,
+): { investorId: number; score: number; classification: LeadClassification } {
+  const db = getDb();
+  const { score, classification } = scoreLead({
+    propertyType: input.propertyType,
+    budget: input.budget,
+    locationScope: input.locationScope,
+    locationFree: input.locationFree || null,
+    priorities: input.priorities,
+    financeStatus: input.financeStatus,
+    timeframe: input.timeframe,
+  });
+  const followUpDays = followUpWindowDays(classification);
+
+  db.transaction(() => {
+    db.prepare(
+      `INSERT INTO investor_preferences
+         (investor_id, property_type, budget, location_scope, location_free,
+          priorities, finance_status, timeframe)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      id,
+      input.propertyType,
+      input.budget,
+      input.locationScope,
+      input.locationFree || null,
+      JSON.stringify(input.priorities),
+      input.financeStatus,
+      input.timeframe,
+    );
+
+    db.prepare(
+      `UPDATE investors
+          SET first_name = ?, last_name = ?, mobile = ?, contact_method = ?,
+              notes_from_lead = CASE
+                WHEN ? IS NULL THEN notes_from_lead
+                WHEN notes_from_lead IS NULL OR notes_from_lead = '' THEN ?
+                ELSE notes_from_lead || char(10) || '---' || char(10) || ?
+              END,
+              lead_score = ?, classification = ?,
+              status = CASE WHEN status IN ('nurture','not_suitable') THEN 'new' ELSE status END,
+              next_followup_at = CASE
+                WHEN next_followup_at IS NULL OR next_followup_at > datetime('now', ?)
+                THEN datetime('now', ?) ELSE next_followup_at END,
+              updated_at = datetime('now')
+        WHERE id = ?`,
+    ).run(
+      input.firstName,
+      input.lastName,
+      input.mobile,
+      input.contactMethod,
+      input.message || null,
+      input.message || null,
+      input.message || null,
+      score,
+      classification,
+      `+${followUpDays} days`,
+      `+${followUpDays} days`,
+      id,
+    );
+  })();
+
+  return { investorId: id, score, classification };
+}
+
 export function getInvestor(id: number): InvestorWithPreferences | null {
   const db = getDb();
   const investor = db.prepare("SELECT * FROM investors WHERE id = ?").get(id) as
@@ -148,6 +231,41 @@ export function getInvestor(id: number): InvestorWithPreferences | null {
   };
 }
 
+/* ------------------------------------------------------------------ */
+/* Ownership                                                           */
+/* ------------------------------------------------------------------ */
+
+export type AdminOption = { id: number; name: string; email: string };
+
+export function listActiveAdmins(): AdminOption[] {
+  return getDb()
+    .prepare("SELECT id, name, email FROM admin_users WHERE is_active = 1 ORDER BY name COLLATE NOCASE")
+    .all() as AdminOption[];
+}
+
+/** Assign (or unassign, with null) a lead. Returns false for an unknown admin. */
+export function assignInvestor(id: number, adminId: number | null): boolean {
+  const db = getDb();
+  if (adminId !== null) {
+    const exists = db.prepare("SELECT 1 FROM admin_users WHERE id = ? AND is_active = 1").get(adminId);
+    if (!exists) return false;
+  }
+  db.prepare("UPDATE investors SET assigned_to = ?, updated_at = datetime('now') WHERE id = ?").run(adminId, id);
+  return true;
+}
+
+/**
+ * Give an unowned lead to whoever is working it. Conditional in SQL so two
+ * agents calling at once can't both claim it — the first write wins.
+ */
+export function claimIfUnassigned(id: number, adminId: number): boolean {
+  return (
+    getDb()
+      .prepare("UPDATE investors SET assigned_to = ? WHERE id = ? AND assigned_to IS NULL")
+      .run(adminId, id).changes > 0
+  );
+}
+
 export type InvestorFilters = {
   status?: string;
   classification?: string;
@@ -160,6 +278,8 @@ export type InvestorFilters = {
   from?: string;
   to?: string;
   needsFollowUp?: boolean;
+  /** An admin id, or "unassigned". */
+  owner?: number | "unassigned";
   sort?: "recent" | "score" | "name";
   limit?: number;
   offset?: number;
@@ -173,6 +293,7 @@ export type InvestorListItem = InvestorRow & {
   timeframe: string | null;
   finance_status: string | null;
   match_count: number;
+  owner_name: string | null;
 };
 
 export function listInvestors(filters: InvestorFilters = {}): {
@@ -226,6 +347,12 @@ export function listInvestors(filters: InvestorFilters = {}): {
     where.push("date(i.created_at) <= date(?)");
     params.push(filters.to);
   }
+  if (filters.owner === "unassigned") {
+    where.push("i.assigned_to IS NULL");
+  } else if (typeof filters.owner === "number") {
+    where.push("i.assigned_to = ?");
+    params.push(filters.owner);
+  }
   if (filters.needsFollowUp) {
     where.push(
       "i.next_followup_at IS NOT NULL AND i.next_followup_at <= datetime('now') AND i.status NOT IN ('converted','not_suitable')",
@@ -258,7 +385,8 @@ export function listInvestors(filters: InvestorFilters = {}): {
     .prepare(
       `SELECT i.*, p.property_type, p.budget, p.location_scope, p.location_free,
               p.timeframe, p.finance_status,
-              (SELECT COUNT(*) FROM opportunity_matches m WHERE m.investor_id = i.id) AS match_count
+              (SELECT COUNT(*) FROM opportunity_matches m WHERE m.investor_id = i.id) AS match_count,
+              (SELECT name FROM admin_users a WHERE a.id = i.assigned_to) AS owner_name
        ${base}
        ${orderSql}
        LIMIT ? OFFSET ?`,
@@ -296,6 +424,41 @@ export function updateInvestorFields(
   sets.push("updated_at = datetime('now')");
   params.push(id);
   db.prepare(`UPDATE investors SET ${sets.join(", ")} WHERE id = ?`).run(...params);
+}
+
+/**
+ * Pipeline position used for automatic moves. Terminal outcomes are absent on
+ * purpose: nothing automatic may reopen a converted or not-suitable lead.
+ */
+const AUTO_PIPELINE_RANK: Partial<Record<LeadStatus, number>> = {
+  new: 0,
+  nurture: 0,
+  contacted: 1,
+  qualified: 2,
+  opportunity_sent: 3,
+  inspection_discussion: 4,
+  negotiating: 5,
+};
+
+/**
+ * Move a lead forward, never backward.
+ *
+ * Automatic events (a link issued, an enquiry through a link) used to call
+ * `updateInvestorStatus` directly, so a buyer already negotiating was knocked
+ * back to "Opportunity Sent" when a second link went out, and a converted
+ * client re-entered the pipeline. Manual changes in the admin still use
+ * `updateInvestorStatus` and can go anywhere.
+ */
+export function advanceInvestorStatus(id: number, status: LeadStatus): boolean {
+  const row = getDb().prepare("SELECT status FROM investors WHERE id = ?").get(id) as
+    | { status: LeadStatus }
+    | undefined;
+  if (!row) return false;
+  const current = AUTO_PIPELINE_RANK[row.status];
+  const target = AUTO_PIPELINE_RANK[status];
+  if (current === undefined || target === undefined || target <= current) return false;
+  updateInvestorStatus(id, status);
+  return true;
 }
 
 /** Recompute score + classification, e.g. after criteria are edited in admin. */

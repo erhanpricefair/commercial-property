@@ -26,6 +26,8 @@ npm run typecheck && npm test && npm run audit:privacy
   income/yield/capital/growth", "safe investment", "secure return", "high
   return", "our development", "our project", "secret stocklist", "exclusive stock".
 - The sitemap importing a repository or listing `/admin`, `/api/` or `/opportunity/`.
+- Banned copy in email templates (`lib/email/templates.ts`) or social copy
+  (`social/POST-THESE.md`, `scripts/make-social.ts`) — the audit scans them too.
 
 ## Route groups
 
@@ -36,7 +38,8 @@ npm run typecheck && npm test && npm run audit:privacy
   (an outbound link leaks a click that was paid for). noindex.
 - `(admin)` — no public chrome and **no analytics**: a nested layout would
   report URLs like `/admin/investors/42` to GA and Meta.
-- `(presentation)` — same reasoning, plus `Referrer-Policy: no-referrer`.
+- `(presentation)` — same reasoning, plus `Referrer-Policy: no-referrer`. The
+  `/unsubscribe` page lives here too: its URL carries a per-person token.
 
 Never add a top-level `src/app/layout.tsx` — it would wrap every group in the
 public shell and reintroduce that leak. A test asserts it doesn't exist.
@@ -56,6 +59,22 @@ public shell and reintroduce that leak. A test asserts it doesn't exist.
 - `src/lib/attribution.ts` — UTM/click-ID capture. First touch wins per
   session; it must never throw, because blocked storage is common and a lost
   UTM is much cheaper than a lost lead.
+- `src/lib/release.ts` — builder / channel-partner release approval. Pure.
+  `createPresentation()` refuses a link the approval doesn't cover, and
+  `loadPresentationByToken()` re-checks on every view, so withdrawn or lapsed
+  approval, or sold/withdrawn stock, takes existing links down. New stock is
+  `none` (not shareable) by default. Never bypass it in a template or script.
+- `src/lib/repositories/consent.ts` — marketing consent and unsubscribe.
+  Only `TRANSACTIONAL_TEMPLATES` go to people without consent; unknown
+  template keys count as marketing. The dispatcher re-checks at send time and
+  appends the sender-identity / unsubscribe footer and `List-Unsubscribe`.
+- `src/lib/request.ts` — `clientIp()` (never the leftmost `X-Forwarded-For`;
+  set `TRUSTED_IP_HEADER` behind a proxy other than Fly) and `rejectNonJson()`
+  on every public JSON POST.
+- `src/lib/time.ts` — Melbourne "today". Never `date('now')` for anything an
+  agent reads as today; the server is UTC.
+- Stored timestamps go through `toSqliteTime()` (db.ts). An ISO string compared
+  as text against `datetime('now')` stays "unexpired" until the end of its UTC day.
 - `src/lib/db.ts` — `addMissingColumns()` runs between the schema block and
   any index over a late-added column. An index declared in the `CREATE TABLE`
   block over a column added later will fail on every existing database.
@@ -96,7 +115,11 @@ on carries the form itself (`InlineForm`), not a link to it — a link to
   form discloses it at the point of collection and the privacy policy covers
   it; do not move the save earlier or remove the notice.
 - `promotePartial()` links a completed registration back to its partial, so one
-  person is never worked as two leads.
+  person is never worked as two leads. Likewise a repeat registration, guide
+  request or enquiry from a known email attaches to the existing investor
+  (`reRegisterInvestor()`), never a second row.
+- Funnel steps are reported once per session, on first reach, under one
+  `source` label for start/step/complete. Prefilled steps count as reached.
 - Landing pages carry a `prefill` so a page that has already established intent
   doesn't ask for it again.
 

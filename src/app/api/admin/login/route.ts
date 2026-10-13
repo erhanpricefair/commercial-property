@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { login, SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { clientIp, rejectNonJson } from "@/lib/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,10 +11,10 @@ export const dynamic = "force-dynamic";
  * that guards everything private.
  */
 export async function POST(request: NextRequest) {
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "unknown";
+  const notJson = rejectNonJson(request);
+  if (notJson) return notJson;
+
+  const ip = clientIp(request.headers);
 
   if (!checkRateLimit(`admin-login:${ip}`, { limit: 8, windowMs: 15 * 60 * 1000 })) {
     return NextResponse.json(
@@ -36,7 +37,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const session = login(body.email, body.password, {
+  // Per-account limit as well as per-IP: a distributed guess against one
+  // address spreads across many IPs and never trips the IP limit. Generic
+  // message, so the lockout doesn't confirm the account exists.
+  const accountKey = `admin-login-account:${String(body.email).trim().toLowerCase()}`;
+  if (!checkRateLimit(accountKey, { limit: 10, windowMs: 15 * 60 * 1000 })) {
+    return NextResponse.json(
+      { ok: false, error: "Too many attempts. Please wait and try again." },
+      { status: 429 },
+    );
+  }
+
+  const session = login(String(body.email), String(body.password), {
     userAgent: request.headers.get("user-agent") ?? undefined,
     ip,
   });

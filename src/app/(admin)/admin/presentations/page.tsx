@@ -6,15 +6,27 @@ import { SITE } from "@/lib/site";
 import { labelFor } from "@/lib/taxonomy";
 import { revokePresentationAction } from "../investors/actions";
 import CopyLink from "@/components/admin/CopyLink";
+import { releaseDecision } from "@/lib/release";
 
 export const dynamic = "force-dynamic";
 
-export default async function PresentationsPage() {
+export default async function PresentationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ created?: string; linkError?: string }>;
+}) {
   await requireAdminPage();
+  const { created, linkError } = await searchParams;
+  const createdId = Number(created) || null;
   const presentations = listPresentations();
 
-  const isLive = (p: (typeof presentations)[number]) =>
-    !p.revoked_at && (!p.expires_at || new Date(p.expires_at) > new Date());
+  const notExpired = (p: (typeof presentations)[number]) =>
+    !p.revoked_at &&
+    (!p.expires_at ||
+      new Date(p.expires_at.includes("T") ? p.expires_at : p.expires_at.replace(" ", "T") + "Z") > new Date());
+  // Same rule the public page applies on every view, so what this list calls
+  // live is what the recipient can actually open.
+  const isLive = (p: (typeof presentations)[number]) => notExpired(p) && releaseDecision(p).canShare;
 
   return (
     <>
@@ -23,12 +35,24 @@ export default async function PresentationsPage() {
         description="Tokenised links you've issued to investors. Each is noindex, excluded from the sitemap, and revocable."
       />
 
+      {linkError && (
+        <div role="alert" className="mb-5 rounded-xl border border-signal-hot/30 bg-signal-hot/5 px-4 py-3 text-sm text-signal-hot">
+          Link not created: {linkError}
+        </div>
+      )}
+      {createdId && (
+        <div role="status" className="mb-5 rounded-xl border border-signal-positive/30 bg-signal-positive/5 px-4 py-3 text-sm text-ink-700">
+          Private link created — it&rsquo;s highlighted below. Copy it and send it to the investor.
+        </div>
+      )}
+
       <div className="mb-5 rounded-xl border border-ink-100 bg-canvas-raised px-4 py-3">
         <p className="text-xs leading-relaxed text-ink-500">
           Links use 32 bytes of cryptographic randomness, so they cannot be guessed or enumerated.
           Identifying fields — developer, development name, exact address and lot/unit number — are
           stripped by the data layer unless you ticked &ldquo;disclose identity&rdquo; when creating
-          the link.
+          the link and the builder&rsquo;s recorded approval covers full disclosure. A link stops
+          working as soon as approval is withdrawn or lapses, or the property is sold or withdrawn.
         </p>
       </div>
 
@@ -53,7 +77,12 @@ export default async function PresentationsPage() {
             </thead>
             <tbody className="divide-y divide-ink-50">
               {presentations.map((presentation) => (
-                <tr key={presentation.id} className={isLive(presentation) ? "" : "opacity-50"}>
+                <tr
+                  key={presentation.id}
+                  className={`${isLive(presentation) ? "" : "opacity-50"} ${
+                    presentation.id === createdId ? "bg-brass-100/60" : ""
+                  }`}
+                >
                   <td className="px-4 py-3">
                     <Link
                       href={`/admin/opportunities/${presentation.opportunity_id}`}
@@ -85,7 +114,11 @@ export default async function PresentationsPage() {
                           : "border-ink-200 bg-canvas-sunken text-ink-500"
                       }`}
                     >
-                      {presentation.disclose_identity ? "Disclosed" : "Withheld"}
+                      {presentation.disclose_identity
+                        ? releaseDecision(presentation).canDisclose
+                          ? "Disclosed"
+                          : "Withheld (approval is summary only)"
+                        : "Withheld"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-xs tabular-nums text-ink-600">
@@ -104,6 +137,10 @@ export default async function PresentationsPage() {
                   <td className="px-4 py-3">
                     {isLive(presentation) ? (
                       <CopyLink url={`${SITE.url}/opportunity/${presentation.token}`} />
+                    ) : notExpired(presentation) ? (
+                      <span className="text-xs text-signal-hot">
+                        Blocked: {releaseDecision(presentation).reason}
+                      </span>
                     ) : (
                       <span className="text-xs text-ink-400">Inactive</span>
                     )}
