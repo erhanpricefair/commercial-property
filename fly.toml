@@ -20,7 +20,7 @@ primary_region = "syd"
     # Public config is inlined at build time. Set these to your real values
     # before the first deploy, or canonical URLs and the sitemap will be wrong.
     NEXT_PUBLIC_SITE_URL = "https://yourdomain.com.au"
-    NEXT_PUBLIC_SITE_NAME = "Builder Release Townhouses"
+    NEXT_PUBLIC_SITE_NAME = "NewPF"
     NEXT_PUBLIC_CONTACT_EMAIL = "invest@yourdomain.com.au"
 
 [env]

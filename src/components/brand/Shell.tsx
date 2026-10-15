@@ -19,18 +19,21 @@ function splitName(name: string): [string, string | null] {
 }
 
 export function Wordmark({ tone = "dark" }: { tone?: "dark" | "light" }) {
-  const [primary, secondary] = splitName(SITE.name);
+  const [primary, rest] = splitName(SITE.name);
+  // A one-word name ("NewPF") carries the descriptor as its second line.
+  const secondary = rest ?? HOME_COPY.descriptor;
+  const suffix = rest ? " · Melbourne’s north" : "";
   return (
     <span className={`flex flex-col ${tone === "dark" ? "text-charcoal" : "text-ivory"}`}>
       <span className="nf-serif text-[1.45rem] leading-none tracking-[-0.02em]">{primary}</span>
       {secondary && (
         <span
-          className={`mt-1 font-grotesk text-[0.625rem] font-semibold uppercase tracking-[0.28em] ${
+          className={`mt-1 whitespace-nowrap font-grotesk text-[0.625rem] font-semibold uppercase tracking-[0.16em] sm:tracking-[0.28em] ${
             tone === "dark" ? "text-olive" : "text-limestone"
           }`}
         >
           {secondary}
-          <span className="hidden sm:inline"> · Melbourne&rsquo;s north</span>
+          {suffix && <span className="hidden sm:inline">{suffix}</span>}
         </span>
       )}
     </span>
@@ -90,6 +93,9 @@ export function BrandFooter() {
               <dd className="mt-3 leading-relaxed text-ivory">
                 {SITE.legalName}
                 {SITE.abn && <span className="block text-limestone">ABN {SITE.abn}</span>}
+                {SITE.licence && (
+                  <span className="block text-limestone">Estate agent licence {SITE.licence}</span>
+                )}
               </dd>
             </div>
             <div>

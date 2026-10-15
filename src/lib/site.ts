@@ -5,8 +5,10 @@
  */
 
 export const SITE = {
-  name: process.env.NEXT_PUBLIC_SITE_NAME ?? "Builder Release Townhouses",
-  shortName: process.env.NEXT_PUBLIC_SITE_SHORT_NAME ?? "Builder Release",
+  // Trading under the company's own name: no separate business name to
+  // register, and nothing in the name implying the business is a builder.
+  name: process.env.NEXT_PUBLIC_SITE_NAME ?? "NewPF",
+  shortName: process.env.NEXT_PUBLIC_SITE_SHORT_NAME ?? "NewPF",
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com.au").replace(/\/$/, ""),
   tagline: "Access selected commercial property investment opportunities.",
   description:
@@ -14,8 +16,10 @@ export const SITE = {
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "invest@example.com.au",
   phone: process.env.NEXT_PUBLIC_CONTACT_PHONE ?? "",
   region: "Melbourne, Victoria",
-  legalName: process.env.NEXT_PUBLIC_LEGAL_NAME ?? "NewPF Business Group Pty Limited",
+  legalName: process.env.NEXT_PUBLIC_LEGAL_NAME ?? "NewPF Business Group Pty Ltd",
   abn: process.env.NEXT_PUBLIC_ABN ?? "",
+  /** Estate agent licence number, shown in the footer and on every email. */
+  licence: process.env.NEXT_PUBLIC_AGENT_LICENCE ?? "",
 } as const;
 
 export const DISCLAIMER_SHORT =

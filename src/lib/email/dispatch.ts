@@ -93,7 +93,13 @@ type Message = {
  * should be confirmed by the agency's legal adviser.
  */
 export function complianceFooter(unsubscribeUrl: string): string {
-  const identity = [SITE.legalName, SITE.abn ? `ABN ${SITE.abn}` : null, SITE.email, SITE.phone || null]
+  const identity = [
+    SITE.legalName,
+    SITE.abn ? `ABN ${SITE.abn}` : null,
+    SITE.licence ? `Estate agent licence ${SITE.licence}` : null,
+    SITE.email,
+    SITE.phone || null,
+  ]
     .filter(Boolean)
     .join(" · ");
   return `\n\n---\nSent by ${identity}.\nYou are receiving this because you contacted us through ${SITE.url}.\nUnsubscribe from marketing emails: ${unsubscribeUrl}\n`;
