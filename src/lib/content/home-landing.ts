@@ -26,6 +26,76 @@ export const HOME_PHOTOS = {
   ],
 } satisfies { hero: HomePhoto; gallery: HomePhoto[] };
 
+/* ------------------------------------------------------------------ */
+/* Builder homes: photo + suburb, nothing else                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Homes a builder has cleared to show publicly — as a PHOTO and a SUBURB NAME
+ * ONLY. There is deliberately no field for an address, lot, street, estate or
+ * development name, so one can't be added by accident; `tests/featured-homes`
+ * also rejects a suburb containing a number (which is what an address looks
+ * like). No price either: the builder cleared photo and suburb, nothing more.
+ *
+ * Each entry records who at the builder approved it and the evidence. An
+ * entry without both is not shown. Ask the builder to confirm by email and
+ * put that email's date in `approvalRef` — a phone call is hard to point to
+ * later.
+ *
+ * `photo`: the builder's photo, saved in `public/homes/` (e.g.
+ * "/homes/tarneit-1.jpg"). Leave it out to use the standard generic photo.
+ * `approvalExpires` (YYYY-MM-DD, optional): the card disappears after it.
+ */
+export type FeaturedHome = {
+  suburb: string;
+  photo?: string;
+  approvedBy: string;
+  approvalRef: string;
+  approvalExpires?: string;
+};
+
+export const FEATURED_HOMES: FeaturedHome[] = [
+  // Example — copy, fill in and uncomment:
+  // {
+  //   suburb: "Tarneit",
+  //   photo: "/homes/tarneit-1.jpg",
+  //   approvedBy: "Jane Citizen, Example Builder Pty Ltd",
+  //   approvalRef: "Email 15/10/2026: photo and suburb only, no address",
+  // },
+];
+
+/** The standard generic photo, for a home the builder hasn't supplied one for. */
+export const GENERIC_HOME_PHOTO: HomePhoto = {
+  src: unsplash("photo-1568605114967-8130f3a36994", 900),
+  alt: "",
+};
+
+const SUBURB_PATTERN = /^[A-Za-z][A-Za-z' .-]{1,48}$/;
+
+/**
+ * Entries safe to put on the public page: approval recorded and not lapsed,
+ * and a suburb that is just a suburb (letters only — any digit means someone
+ * has typed a street address or lot number).
+ */
+export function publishableFeaturedHomes(
+  homes: FeaturedHome[] = FEATURED_HOMES,
+  today: string = new Intl.DateTimeFormat("en-CA", { timeZone: "Australia/Melbourne" }).format(new Date()),
+): FeaturedHome[] {
+  return homes.filter(
+    (home) =>
+      SUBURB_PATTERN.test(home.suburb.trim()) &&
+      home.approvedBy.trim().length > 0 &&
+      home.approvalRef.trim().length > 0 &&
+      (!home.approvalExpires || home.approvalExpires >= today),
+  );
+}
+
+/** Clean a suburb passed in a URL (`/?suburb=Tarneit`) before it reaches the form. */
+export function cleanSuburbParam(value: string | null | undefined): string {
+  const trimmed = (value ?? "").trim().slice(0, 50);
+  return SUBURB_PATTERN.test(trimmed) ? trimmed : "";
+}
+
 export const HOME_COPY = {
   metaTitle: "Find Your Next Home in Melbourne",
   metaDescription:
@@ -42,6 +112,11 @@ export const HOME_COPY = {
     { title: "See homes that may suit", body: "We let you know about homes that match what you've told us." },
   ],
   galleryCaption: "Stock images, for illustration only. Not homes currently for sale.",
+  featuredHeading: "Homes in these suburbs",
+  featuredBody:
+    "Builder homes in the suburbs below. Tap a suburb and we'll send you the details, subject to availability.",
+  featuredCta: "Ask about this home",
+  featuredGenericCaption: "Representative image",
   closingHeading: "Ready to start looking?",
   closingBody: "It takes under a minute, and there's no obligation.",
   disclaimer:

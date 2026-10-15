@@ -13,7 +13,9 @@ import {
   HOME_TIMEFRAME_LABELS,
   HOME_TYPES,
   HOME_TYPE_LABELS,
+  cleanSuburbParam,
 } from "@/lib/content/home-landing";
+import { SUBURB_EVENT } from "@/components/FeaturedHomeCard";
 
 /**
  * The home-buyer form. One screen, native selects (they open the phone's own
@@ -61,6 +63,28 @@ export default function HomeEnquiryForm({ idPrefix = "home" }: { idPrefix?: stri
 
   useEffect(() => {
     captureAttribution();
+  }, []);
+
+  // A suburb chosen from a builder-home card, or passed in an ad link
+  // (`/?suburb=Tarneit`), arrives already filled in.
+  useEffect(() => {
+    const fromUrl = cleanSuburbParam(new URLSearchParams(window.location.search).get("suburb"));
+    if (fromUrl) setForm((prev) => ({ ...prev, suburbs: prev.suburbs || fromUrl }));
+
+    const onChoose = (event: Event) => {
+      const suburb = cleanSuburbParam(String((event as CustomEvent).detail ?? ""));
+      if (!suburb) return;
+      setForm((prev) => {
+        const existing = prev.suburbs.split(",").map((s) => s.trim()).filter(Boolean);
+        if (existing.some((s) => s.toLowerCase() === suburb.toLowerCase())) return prev;
+        return { ...prev, suburbs: [...existing, suburb].join(", ") };
+      });
+      markStarted();
+    };
+    window.addEventListener(SUBURB_EVENT, onChoose);
+    return () => window.removeEventListener(SUBURB_EVENT, onChoose);
+    // markStarted only reads a ref; re-subscribing on every render isn't needed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

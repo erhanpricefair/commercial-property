@@ -150,5 +150,9 @@ on carries the form itself (`InlineForm`), not a link to it — a link to
   of a real building can identify a development. The home-buyer landing page
   uses generic stock photos (Unsplash License) by the owner's choice; they
   must never be of a home the agency is marketing, and stay labelled
-  "for illustration only".
+  "for illustration only". The one exception is `FEATURED_HOMES` in
+  `content/home-landing.ts`: builder homes the builder has cleared for a
+  photo and suburb name only — no address, lot, estate or price. Each entry
+  records who approved it and the evidence, or it isn't shown, and
+  `tests/featured-homes.test.ts` rejects a suburb containing a digit.
 - Tap targets are 48px minimum; the qualification form advances on single-select.

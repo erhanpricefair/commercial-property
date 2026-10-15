@@ -2,7 +2,13 @@
 import Link from "next/link";
 import HomeEnquiryForm from "@/components/HomeEnquiryForm";
 import { SITE } from "@/lib/site";
-import { HOME_COPY, HOME_PHOTOS } from "@/lib/content/home-landing";
+import FeaturedHomeCard from "@/components/FeaturedHomeCard";
+import {
+  GENERIC_HOME_PHOTO,
+  HOME_COPY,
+  HOME_PHOTOS,
+  publishableFeaturedHomes,
+} from "@/lib/content/home-landing";
 
 /**
  * Home-buyer lead-generation landing page.
@@ -12,8 +18,14 @@ import { HOME_COPY, HOME_PHOTOS } from "@/lib/content/home-landing";
  * itself a lead), and a sticky button on mobile brings the form back into view.
  * All copy and photos come from `src/lib/content/home-landing.ts`.
  */
+// Re-render hourly so a builder approval that has lapsed (`approvalExpires`)
+// takes its card down without waiting for a redeploy.
+export const revalidate = 3600;
+
 export default function HomeLandingPage() {
   const telHref = SITE.phone ? `tel:${SITE.phone.replace(/[^\d+]/g, "")}` : null;
+  // Only entries with the builder's approval recorded (and not lapsed).
+  const featured = publishableFeaturedHomes();
 
   return (
     <>
@@ -80,6 +92,29 @@ export default function HomeLandingPage() {
             </div>
           </div>
         </section>
+
+        {/* ---------- Builder homes: photo + suburb only ---------- */}
+        {featured.length > 0 && (
+          <section className="container-page pt-16 sm:pt-20" aria-labelledby="featured-heading">
+            <h2 id="featured-heading" className="font-display text-display-md text-ink-900">
+              {HOME_COPY.featuredHeading}
+            </h2>
+            <p className="mt-2 max-w-2xl text-[0.9375rem] leading-relaxed text-ink-600">
+              {HOME_COPY.featuredBody}
+            </p>
+            <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {featured.map((home) => (
+                <li key={`${home.suburb}-${home.photo ?? "generic"}`}>
+                  <FeaturedHomeCard
+                    suburb={home.suburb}
+                    photo={home.photo ? { src: home.photo, alt: `Home in ${home.suburb}` } : GENERIC_HOME_PHOTO}
+                    isGeneric={!home.photo}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* ---------- How it works ---------- */}
         <section className="container-page py-16 sm:py-20">
