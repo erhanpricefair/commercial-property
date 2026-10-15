@@ -278,20 +278,25 @@ export default function HomeEnquiryForm({ suburbs }: { suburbs: string[] }) {
             );
           })}
         </div>
-        <label htmlFor="nf-otherSuburbs" className="sr-only">
-          Other suburbs
+        <label htmlFor="nf-otherSuburbs" className="mt-6 block text-[1rem] font-medium leading-snug text-charcoal">
+          Not on this list?{" "}
+          <span className="nf-serif text-[1.125rem] italic text-olive">Whereabouts are you looking?</span>
         </label>
         <input
           id="nf-otherSuburbs"
           name="otherSuburbs"
           type="text"
           autoComplete="off"
-          className="nf-input mt-3"
-          placeholder="Other suburbs (optional)"
+          className="nf-input mt-2"
+          placeholder="Suburbs or areas, e.g. Thornbury, Coburg, Ivanhoe"
           value={form.otherSuburbs}
           onFocus={markStarted}
           onChange={(e) => set("otherSuburbs", e.target.value)}
+          aria-describedby="nf-otherSuburbs-note"
         />
+        <p id="nf-otherSuburbs-note" className="mt-1.5 text-xs leading-relaxed text-charcoal-muted">
+          Optional. We&rsquo;ll keep it in mind as new homes become available.
+        </p>
       </fieldset>
 
       <div className="grid gap-6 sm:grid-cols-2">

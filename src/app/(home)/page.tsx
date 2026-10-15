@@ -144,6 +144,7 @@ export default function HomeLandingPage() {
             <div className="nf-wrap pb-20 lg:pb-24">
               <OpportunityIndex
                 cta={c.opportunityCta}
+                elsewhere={{ heading: c.elsewhereHeading, note: c.elsewhereNote, cta: c.elsewhereCta }}
                 items={homes.map((h) => ({ suburb: h.suburb, council: SUBURB_COUNCILS[h.suburb], photo: h.photo }))}
               />
             </div>

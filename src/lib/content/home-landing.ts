@@ -144,6 +144,9 @@ export const HOME_COPY = {
   opportunitiesBody:
     "At the builder's request, addresses and photographs aren't published. Choose a suburb and we'll send you the details directly. All opportunities are subject to availability.",
   opportunityCta: "Request details",
+  elsewhereHeading: "Somewhere else?",
+  elsewhereNote: "Not seeing your suburb? Tell us whereabouts you're looking.",
+  elsewhereCta: "Tell us where",
 
   audienceLabel: "Who it's for",
   audience: ["Professionals.", "Couples.", "Growing families.", "Owner-occupiers."],
