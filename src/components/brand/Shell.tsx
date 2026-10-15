@@ -8,17 +8,31 @@ import { HOME_COPY } from "@/lib/content/home-landing";
  * to the landing page), so there is no navigation away from the funnel.
  */
 
+/**
+ * The name as a stacked lockup: everything but the last word in the serif,
+ * the last word ("Townhouses") set small beneath it. A one-word name renders
+ * on a single line.
+ */
+function splitName(name: string): [string, string | null] {
+  const words = name.trim().split(/\s+/);
+  return words.length > 1 ? [words.slice(0, -1).join(" "), words[words.length - 1]] : [name, null];
+}
+
 export function Wordmark({ tone = "dark" }: { tone?: "dark" | "light" }) {
+  const [primary, secondary] = splitName(SITE.name);
   return (
-    <span className={`flex items-baseline gap-3 ${tone === "dark" ? "text-charcoal" : "text-ivory"}`}>
-      <span className="nf-serif text-[1.65rem] leading-none tracking-[-0.02em]">{SITE.name}</span>
-      <span
-        className={`hidden border-l pl-3 font-grotesk text-[0.6875rem] font-semibold uppercase tracking-[0.18em] sm:inline ${
-          tone === "dark" ? "border-charcoal/25 text-charcoal-graphite" : "border-ivory/30 text-ivory/75"
-        }`}
-      >
-        {HOME_COPY.descriptor}
-      </span>
+    <span className={`flex flex-col ${tone === "dark" ? "text-charcoal" : "text-ivory"}`}>
+      <span className="nf-serif text-[1.45rem] leading-none tracking-[-0.02em]">{primary}</span>
+      {secondary && (
+        <span
+          className={`mt-1 font-grotesk text-[0.625rem] font-semibold uppercase tracking-[0.28em] ${
+            tone === "dark" ? "text-olive" : "text-limestone"
+          }`}
+        >
+          {secondary}
+          <span className="hidden sm:inline"> · Melbourne&rsquo;s north</span>
+        </span>
+      )}
     </span>
   );
 }
@@ -61,10 +75,13 @@ export function BrandFooter() {
       <div className="nf-wrap pb-28 pt-16 sm:pb-12 lg:pt-20">
         <div className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <p className="nf-serif text-[3.5rem] leading-none tracking-[-0.03em] sm:text-[4.5rem]">{SITE.name}</p>
-            <p className="mt-4 max-w-sm text-[0.9375rem] leading-relaxed text-limestone">
-              {HOME_COPY.descriptor} in Melbourne&rsquo;s north, introduced personally.
+            <p className="nf-serif text-[3rem] leading-[0.95] tracking-[-0.03em] sm:text-[4rem]">
+              {splitName(SITE.name)[0]}
+              {splitName(SITE.name)[1] && (
+                <span className="block italic text-limestone">{splitName(SITE.name)[1]}</span>
+              )}
             </p>
+            <p className="mt-5 max-w-sm text-[0.9375rem] leading-relaxed text-limestone">{HOME_COPY.tagline}</p>
           </div>
 
           <dl className="grid gap-8 text-sm sm:grid-cols-2 lg:col-span-7 lg:grid-cols-3">
@@ -105,7 +122,10 @@ export function BrandFooter() {
         </div>
 
         <div className="mt-14 grid gap-6 border-t border-ivory/20 pt-8 text-xs leading-relaxed text-limestone lg:grid-cols-12">
-          <p className="lg:col-span-6">{HOME_COPY.disclaimer}</p>
+          <p className="lg:col-span-6">
+            <span className="block text-ivory">{HOME_COPY.roleNote}</span>
+            <span className="mt-2 block">{HOME_COPY.disclaimer}</span>
+          </p>
           <p className="lg:col-span-5 lg:col-start-8">{HOME_COPY.imageNote}</p>
         </div>
         <p className="mt-8 text-xs text-limestone-deep">

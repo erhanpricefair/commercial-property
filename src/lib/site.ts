@@ -5,8 +5,8 @@
  */
 
 export const SITE = {
-  name: process.env.NEXT_PUBLIC_SITE_NAME ?? "NewPF",
-  shortName: process.env.NEXT_PUBLIC_SITE_SHORT_NAME ?? "NewPF",
+  name: process.env.NEXT_PUBLIC_SITE_NAME ?? "Builder Release Townhouses",
+  shortName: process.env.NEXT_PUBLIC_SITE_SHORT_NAME ?? "Builder Release",
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com.au").replace(/\/$/, ""),
   tagline: "Access selected commercial property investment opportunities.",
   description:

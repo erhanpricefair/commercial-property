@@ -133,6 +133,14 @@ const BANNED = [
   { label: "\"high return\"", pattern: /\bhigh\s+returns?\b/i },
   { label: "\"our development/project\"", pattern: /our\s+(development|project)\b/i },
   { label: "\"secret stocklist\"", pattern: /secret\s+stock\s?list/i },
+  // Not true of the current homes (see content/home-landing.ts): no written
+  // exclusivity, some are listed online, prices aren't below market, and the
+  // business introduces buyers rather than building or selling.
+  // Any "exclusive" claim; the legal "non-exclusive jurisdiction" is fine.
+  { label: "an \"exclusive\" claim", pattern: /(?<!non-)\bexclusiv(e|ely|ity)\b(?!\s+jurisdiction)/i },
+  { label: "\"not available online\"", pattern: /not\s+(available|listed|advertised)\s+online|won'?t\s+find\s+(them|these|it)\s+online/i },
+  { label: "\"wholesale\"", pattern: /\bwholesale\b/i },
+  { label: "\"builder direct\"", pattern: /\bbuilders?\s+direct\b|\bdirect\s+from\s+(the\s+)?builders?\b/i },
 ];
 
 // Email templates and social posts reach the public too — an investor's inbox

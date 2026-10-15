@@ -33,8 +33,9 @@ npm run typecheck && npm test && npm run audit:privacy
 
 `src/app` has five root layouts, one per group. This is not cosmetic:
 
-- `(home)` — NewPF (NewPF Business Group Pty Limited): established townhouses
-  in Melbourne's north. The landing page at `/` plus `/privacy` and `/terms`,
+- `(home)` — Builder Release Townhouses, trading name of NewPF Business Group
+  Pty Limited: completed builder townhouses in Melbourne's north. The business
+  introduces buyers; the builder sells. The landing page at `/` plus `/privacy` and `/terms`,
   in the NewPF shell (`components/brand/`). Analytics, no navigation away from
   the funnel, indexed. Copy and the suburb index live in
   `src/lib/content/home-landing.ts`; the form's options in
@@ -161,6 +162,9 @@ on carries the form itself (`InlineForm`), not a link to it — a link to
   current suburbs are 9–12 km north of the CBD. The $900k–$1.3m band is the
   business's own figure. Don't describe the homes' features (bedrooms,
   parking, outdoor space) unless true of every home it would describe.
+  Never "exclusive" (no written exclusivity), "not available online" (some
+  homes are listed online), "wholesale" or "builder direct" — the privacy
+  audit fails on all four. Revisit only if the underlying facts change.
 - NewPF design: ivory / limestone / charcoal / olive tokens, Newsreader +
   Instrument Sans (self-hosted, `app/(home)/fonts.ts`), square edges, thin
   rules, numbered sections, colour fields rather than cards. Styles are scoped

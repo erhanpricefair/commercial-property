@@ -3,15 +3,21 @@
  * at `/`. Editing this file is all it takes to change what the page says.
  *
  * CLAIMS. Every factual statement here is one of:
- *   - supplied by the business: established townhouses, typically
+ *   - supplied by the business: completed builder townhouses, typically
  *     $900,000–$1.3 million, the four suburbs, the builder's marketing
- *     restriction;
+ *     restriction, and NewPF's role — it introduces buyers; the builder sells;
  *   - checked publicly: each suburb's council (see SUBURB_COUNCILS);
  *   - a description of how NewPF works with buyers.
  * Don't add a claim about the homes themselves (bedrooms, parking, outdoor
  * space, finishes, distances, "inner" Melbourne) unless it has been verified
  * for every home it would describe. "Inner Melbourne" was deliberately not
  * used: the current suburbs are 9–12 km from the CBD, in the north.
+ *
+ * Also NOT claimed, because they aren't true (Oct 2026): "exclusive" (no
+ * written exclusivity with the builder), "not available online" (some homes
+ * are listed online by others), "wholesale" (prices aren't below market) and
+ * "builder direct" / anything implying NewPF is the builder. The privacy
+ * audit fails the build on those phrases.
  *
  * IMAGERY. No property photographs and nothing that could identify a
  * restricted home: the page uses original drawings (components/brand/Artwork).
@@ -103,31 +109,32 @@ export function publishableFeaturedHomes(
 /* ------------------------------------------------------------------ */
 
 export const HOME_COPY = {
-  metaTitle: "Established townhouses in Melbourne's north",
+  metaTitle: "Completed builder townhouses in Melbourne's north",
   metaDescription:
-    "Established townhouses in Melbourne's northern neighbourhoods, typically $900,000 to $1.3 million, introduced personally. Register your interest.",
+    "Completed builder townhouses in Melbourne's northern neighbourhoods, typically $900,000 to $1.3 million, introduced personally. Register your interest.",
 
-  descriptor: "Established townhouses",
-  heroEyebrow: "Established townhouses — Melbourne's north",
+  descriptor: "Completed builder townhouses",
+  tagline: "Completed builder townhouses, introduced personally.",
+  heroEyebrow: "Completed builder townhouses",
   /** Two lines; the second is set in italic. */
   headline: ["Melbourne's north.", "A more considered way home."],
   subhead:
-    "Discover established townhouses across Melbourne's northern neighbourhoods, introduced through a considered and personal property experience.",
+    "Discover completed builder townhouses across Melbourne's northern neighbourhoods, introduced through a considered and personal property experience.",
   primaryCta: "Explore Available Opportunities",
   secondaryCta: "Register Your Interest",
   facts: [
-    { label: "Homes", value: "Established townhouses" },
+    { label: "Homes", value: "Completed builder townhouses" },
     { label: "Typically", value: "$900,000 – $1.3 million" },
   ],
 
   approachLabel: "Approach",
-  approachStatement: "Homes introduced, not advertised.",
+  approachStatement: "Every home, introduced personally.",
   approachBody:
-    "The townhouses we present are subject to the builder's marketing restrictions, so you won't find them here with an address or a photograph. We introduce them directly instead — by suburb first, then in full once we understand what you're looking for.",
+    "The builder's marketing restrictions mean we don't publish addresses or photographs here. Instead we introduce each home directly — by suburb first, then in full once we understand what you're looking for. The homes are sold by the builder; our role is to introduce you.",
   principles: [
     {
       title: "Already built",
-      body: "Established townhouses, so you consider the home itself rather than a plan.",
+      body: "Completed townhouses, so you consider the home itself rather than a plan.",
     },
     {
       title: "Introduced personally",
@@ -165,6 +172,9 @@ export const HOME_COPY = {
   registerBody:
     "Tell us what you're looking for and we'll be in touch personally. There's no obligation, and your details aren't shared with anyone without your agreement.",
 
+  /** Plain statement of who does what, shown in the footer. */
+  roleNote:
+    "We introduce buyers to builders. The homes are sold directly by the builder.",
   imageNote:
     "Illustrations on this page are original drawings and don't depict any property. In line with builder marketing restrictions, no property addresses or photographs are published.",
   disclaimer:
