@@ -43,7 +43,7 @@ export default function FeaturedHomeCard({
           </span>
         )}
       </span>
-      <span className="flex min-h-[3.5rem] items-center justify-between gap-3 px-5 py-4">
+      <span className="flex min-h-[3.5rem] flex-col items-start gap-1 px-5 py-4">
         <span className="text-base font-semibold text-ink-900">{suburb}</span>
         <span className="text-sm font-medium text-brass-600 group-hover:underline">{HOME_COPY.featuredCta}</span>
       </span>

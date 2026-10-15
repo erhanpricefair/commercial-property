@@ -54,8 +54,23 @@ export type FeaturedHome = {
   approvalExpires?: string;
 };
 
+/**
+ * Approval so far: given verbally by the builder to the agency owner on
+ * 15 Oct 2026 — photo (or the generic photo) and suburb name only, no
+ * address. Replace `approvedBy` with the builder contact's name and
+ * `approvalRef` with the date of their confirming email once you have it.
+ */
+const BUILDER_APPROVAL = {
+  approvedBy: "Builder (contact name to be recorded)",
+  approvalRef: "Verbal approval to the agency owner, 15/10/2026: photo and suburb only, no address — confirm by email",
+};
+
 export const FEATURED_HOMES: FeaturedHome[] = [
-  // Example — copy, fill in and uncomment:
+  { suburb: "Reservoir", ...BUILDER_APPROVAL },
+  { suburb: "Bellfield", ...BUILDER_APPROVAL },
+  { suburb: "Preston", ...BUILDER_APPROVAL },
+  { suburb: "Pascoe Vale", ...BUILDER_APPROVAL },
+  // To add another — and to give one the builder's own photo, add `photo`:
   // {
   //   suburb: "Tarneit",
   //   photo: "/homes/tarneit-1.jpg",
@@ -64,11 +79,17 @@ export const FEATURED_HOMES: FeaturedHome[] = [
   // },
 ];
 
-/** The standard generic photo, for a home the builder hasn't supplied one for. */
-export const GENERIC_HOME_PHOTO: HomePhoto = {
-  src: unsplash("photo-1568605114967-8130f3a36994", 900),
-  alt: "",
-};
+/**
+ * The standard generic photos, for homes the builder hasn't supplied one for.
+ * Rotated so a row of cards doesn't repeat one house; every card using one is
+ * labelled "Representative image".
+ */
+export const GENERIC_HOME_PHOTOS: HomePhoto[] = [
+  { src: unsplash("photo-1568605114967-8130f3a36994", 900), alt: "" },
+  { src: unsplash("photo-1570129477492-45c003edd2be", 900), alt: "" },
+  { src: unsplash("photo-1564013799919-ab600027ffc6", 900), alt: "" },
+  { src: unsplash("photo-1600596542815-ffad4c1539a9", 900), alt: "" },
+];
 
 const SUBURB_PATTERN = /^[A-Za-z][A-Za-z' .-]{1,48}$/;
 

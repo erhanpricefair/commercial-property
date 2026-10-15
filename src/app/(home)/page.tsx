@@ -4,7 +4,7 @@ import HomeEnquiryForm from "@/components/HomeEnquiryForm";
 import { SITE } from "@/lib/site";
 import FeaturedHomeCard from "@/components/FeaturedHomeCard";
 import {
-  GENERIC_HOME_PHOTO,
+  GENERIC_HOME_PHOTOS,
   HOME_COPY,
   HOME_PHOTOS,
   publishableFeaturedHomes,
@@ -102,12 +102,16 @@ export default function HomeLandingPage() {
             <p className="mt-2 max-w-2xl text-[0.9375rem] leading-relaxed text-ink-600">
               {HOME_COPY.featuredBody}
             </p>
-            <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {featured.map((home) => (
+            <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {featured.map((home, i) => (
                 <li key={`${home.suburb}-${home.photo ?? "generic"}`}>
                   <FeaturedHomeCard
                     suburb={home.suburb}
-                    photo={home.photo ? { src: home.photo, alt: `Home in ${home.suburb}` } : GENERIC_HOME_PHOTO}
+                    photo={
+                      home.photo
+                        ? { src: home.photo, alt: `Home in ${home.suburb}` }
+                        : GENERIC_HOME_PHOTOS[i % GENERIC_HOME_PHOTOS.length]
+                    }
                     isGeneric={!home.photo}
                   />
                 </li>
@@ -132,7 +136,9 @@ export default function HomeLandingPage() {
           </ol>
         </section>
 
-        {/* ---------- Photos ---------- */}
+        {/* ---------- Photos (only when there are no builder homes above,
+             which already use these stock images) ---------- */}
+        {featured.length === 0 && (
         <section className="container-page pb-16 sm:pb-20" aria-label="Example homes">
           <div className="grid gap-4 sm:grid-cols-3">
             {HOME_PHOTOS.gallery.map((photo) => (
@@ -143,6 +149,7 @@ export default function HomeLandingPage() {
           </div>
           <p className="mt-3 text-xs text-ink-400">{HOME_COPY.galleryCaption}</p>
         </section>
+        )}
 
         {/* ---------- Closing CTA ---------- */}
         <section className="bg-ink-900">
