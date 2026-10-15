@@ -1,189 +1,214 @@
-/* eslint-disable @next/next/no-img-element -- remote stock photos, sized by the CDN URL */
-import Link from "next/link";
 import HomeEnquiryForm from "@/components/HomeEnquiryForm";
-import { SITE } from "@/lib/site";
-import FeaturedHomeCard from "@/components/FeaturedHomeCard";
-import {
-  GENERIC_HOME_PHOTOS,
-  HOME_COPY,
-  HOME_PHOTOS,
-  publishableFeaturedHomes,
-} from "@/lib/content/home-landing";
+import OpportunityIndex from "@/components/brand/OpportunityIndex";
+import StickyRegister from "@/components/brand/StickyRegister";
+import { BrandFooter, BrandHeader } from "@/components/brand/Shell";
+import { Streetscape, TerraceElevation } from "@/components/brand/Artwork";
+import { HOME_COPY, SUBURB_COUNCILS, publishableFeaturedHomes } from "@/lib/content/home-landing";
 
 /**
- * Home-buyer lead-generation landing page.
+ * NewPF — established townhouses in Melbourne's north.
  *
- * One job: get the form filled in. The form sits in the first screen on every
- * device, the only links are the legal ones (and the phone number, which is
- * itself a lead), and a sticky button on mobile brings the form back into view.
- * All copy and photos come from `src/lib/content/home-landing.ts`.
+ * Composition: an asymmetric twelve-column grid, thin rules and numbered
+ * sections in the manner of an architecture journal, with full-width colour
+ * fields (olive, limestone, charcoal) instead of cards. The conversion path
+ * runs hero → opportunities by suburb → register: choosing a suburb selects
+ * it in the form and scrolls there.
+ *
+ * Builder marketing restrictions: no property photographs or addresses. The
+ * imagery is original drawing (components/brand/Artwork) and the index shows a
+ * builder's photo only where one has been authorised. All copy and the suburb
+ * list come from src/lib/content/home-landing.ts.
  */
-// Re-render hourly so a builder approval that has lapsed (`approvalExpires`)
-// takes its card down without waiting for a redeploy.
+
+// Re-render hourly so a builder approval that lapses (`approvalExpires`)
+// takes its suburb down without waiting for a redeploy.
 export const revalidate = 3600;
 
+function SectionLabel({ n, children, tone = "dark" }: { n: string; children: React.ReactNode; tone?: "dark" | "light" }) {
+  return (
+    <p className={`nf-kicker flex items-center gap-4 ${tone === "dark" ? "text-olive" : "text-ivory/85"}`}>
+      <span className="tabular-nums">{n}</span>
+      <span aria-hidden="true" className={`h-px w-10 ${tone === "dark" ? "bg-olive/50" : "bg-ivory/50"}`} />
+      <span>{children}</span>
+    </p>
+  );
+}
+
 export default function HomeLandingPage() {
-  const telHref = SITE.phone ? `tel:${SITE.phone.replace(/[^\d+]/g, "")}` : null;
-  // Only entries with the builder's approval recorded (and not lapsed).
-  const featured = publishableFeaturedHomes();
+  const homes = publishableFeaturedHomes();
+  const suburbs = homes.map((h) => h.suburb);
+  const c = HOME_COPY;
 
   return (
-    <>
-      {/* ---------- Top bar ---------- */}
-      <header className="absolute inset-x-0 top-0 z-20">
-        <div className="container-page flex h-16 items-center justify-between">
-          <span className="flex items-center gap-2.5 text-canvas">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-canvas/15 backdrop-blur" aria-hidden="true">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M3 21V9l7-4.5V21" stroke="#FBFAF8" strokeWidth="1.8" strokeLinejoin="round" />
-                <path d="M10 21V11l7 4v6" stroke="#E3D5BC" strokeWidth="1.8" strokeLinejoin="round" />
-              </svg>
-            </span>
-            <span className="text-[0.95rem] font-semibold tracking-tight">{SITE.name}</span>
-          </span>
-          {telHref && (
-            <a
-              href={telHref}
-              className="inline-flex min-h-[48px] items-center rounded-lg px-3 text-sm font-semibold text-canvas hover:bg-canvas/10"
-            >
-              {SITE.phone}
-            </a>
-          )}
-        </div>
-      </header>
+    <div className="nf">
+      <BrandHeader />
 
-      <main>
-        {/* ---------- Hero: photo + form ---------- */}
-        <section className="relative bg-ink-800">
-          <img
-            src={HOME_PHOTOS.hero.src}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-            fetchPriority="high"
-          />
-          {/* Darkens the photo enough for white text at AA contrast. */}
-          <div className="absolute inset-0 bg-gradient-to-b from-ink-900/80 via-ink-900/60 to-ink-900/85 lg:bg-gradient-to-r lg:from-ink-900/85 lg:via-ink-900/60 lg:to-ink-900/30" aria-hidden="true" />
+      <main id="main">
+        {/* ---------------- 00 · First screen ---------------- */}
+        <section id="top" className="nf-wrap grid gap-10 pb-14 pt-10 sm:pt-14 lg:min-h-[calc(100svh-4.5rem)] lg:grid-cols-12 lg:gap-x-12 lg:pb-14 lg:pt-14">
+          <div className="flex flex-col lg:col-span-7 lg:pr-6">
+            <p className="nf-kicker text-olive">{c.heroEyebrow}</p>
 
-          <div className="container-page relative grid gap-8 pb-12 pt-24 sm:pt-28 lg:grid-cols-[1fr_28rem] lg:items-center lg:gap-14 lg:pb-20 lg:pt-32">
-            <div className="text-canvas">
-              <p className="text-eyebrow font-semibold uppercase tracking-[0.16em] text-brass-200">
-                {HOME_COPY.eyebrow}
-              </p>
-              <h1 className="mt-3 font-display text-display-lg text-canvas sm:text-display-xl">
-                {HOME_COPY.headline}
-              </h1>
-              <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-100">{HOME_COPY.subhead}</p>
-              <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-ink-100">
-                {HOME_COPY.trust.map((point) => (
-                  <li key={point} className="flex items-center gap-2">
-                    <svg className="h-4 w-4 text-brass-200" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <path d="M3 8.5l3 3L13 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    {point}
-                  </li>
-                ))}
-              </ul>
+            <h1 className="nf-serif mt-8 text-[clamp(3rem,6.1vw,6rem)] font-light leading-[0.96] tracking-[-0.035em] text-charcoal">
+              <span className="block">{c.headline[0]}</span>
+              {/* Italic capitals overhang to the left; a hair of padding keeps
+                  the A on the text edge. */}
+              <span className="block pl-[0.05em] italic text-olive">{c.headline[1]}</span>
+            </h1>
+
+            <p className="mt-8 max-w-[34rem] text-[1.125rem] leading-[1.65] text-charcoal-graphite sm:text-[1.1875rem]">
+              {c.subhead}
+            </p>
+
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-8">
+              <a href="#opportunities" className="nf-btn-primary group">
+                {c.primaryCta}
+                <span className="nf-arrow" aria-hidden="true">→</span>
+              </a>
+              <a href="#register" className="nf-link self-start text-charcoal sm:self-auto">
+                {c.secondaryCta}
+              </a>
             </div>
 
-            <div id="enquire" className="scroll-mt-6 rounded-2xl bg-canvas-raised p-6 shadow-lift sm:p-8">
-              <h2 className="font-display text-display-sm text-ink-900">Tell us what you&rsquo;re looking for</h2>
-              <p className="mt-1.5 mb-6 text-sm text-ink-500">Takes under a minute.</p>
-              <HomeEnquiryForm />
+            <dl className="mt-12 grid grid-cols-2 gap-x-6 gap-y-6 border-t border-charcoal/20 pt-6 sm:grid-cols-[1fr_1fr_1.6fr] lg:mt-auto">
+              {c.facts.map((fact) => (
+                <div key={fact.label}>
+                  <dt className="nf-kicker text-charcoal-muted">{fact.label}</dt>
+                  <dd className="mt-2 text-[0.9375rem] font-medium text-charcoal">{fact.value}</dd>
+                </div>
+              ))}
+              {suburbs.length > 0 && (
+                <div className="col-span-2 sm:col-span-1">
+                  <dt className="nf-kicker text-charcoal-muted">Suburbs</dt>
+                  <dd className="mt-2 text-[0.9375rem] font-medium text-charcoal">{suburbs.join(" · ")}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+
+          <figure className="flex flex-col lg:col-span-5">
+            <div className="relative aspect-[5/6] overflow-hidden bg-limestone sm:aspect-[4/3] lg:aspect-auto lg:min-h-[32rem] lg:flex-1">
+              <TerraceElevation className="absolute inset-0 h-full w-full" />
+            </div>
+            <figcaption className="mt-3 flex gap-4 font-grotesk text-[0.6875rem] uppercase tracking-[0.16em] text-charcoal-muted">
+              <span className="whitespace-nowrap">Fig. 01</span>
+              <span>Illustrative elevation. Not a depiction of any property.</span>
+            </figcaption>
+          </figure>
+        </section>
+
+        {/* ---------------- 01 · Approach ---------------- */}
+        <section className="border-t border-charcoal/15">
+          <div className="nf-wrap grid gap-10 py-20 lg:grid-cols-12 lg:gap-x-10 lg:py-28">
+            <div className="lg:col-span-3">
+              <SectionLabel n="01">{c.approachLabel}</SectionLabel>
+            </div>
+            <div className="lg:col-span-9">
+              <h2 className="nf-serif max-w-[18ch] text-[clamp(2.25rem,5vw,4.5rem)] font-light leading-[1.02] tracking-[-0.03em] text-charcoal">
+                {c.approachStatement}
+              </h2>
+              <p className="mt-8 max-w-[40rem] text-[1.0625rem] leading-[1.75] text-charcoal-graphite">{c.approachBody}</p>
+
+              <ol className="mt-16 grid border-t border-charcoal md:grid-cols-3">
+                {c.principles.map((p, i) => (
+                  <li
+                    key={p.title}
+                    className={`py-8 md:pr-8 ${i > 0 ? "border-t border-charcoal/15 md:border-l md:border-t-0 md:pl-8" : ""}`}
+                  >
+                    <span className="font-grotesk text-xs font-semibold tabular-nums tracking-[0.16em] text-olive">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <h3 className="nf-serif mt-4 text-[1.75rem] leading-tight tracking-[-0.015em] text-charcoal">{p.title}</h3>
+                    <p className="mt-3 text-[0.9375rem] leading-[1.7] text-charcoal-graphite">{p.body}</p>
+                  </li>
+                ))}
+              </ol>
             </div>
           </div>
         </section>
 
-        {/* ---------- Builder homes: photo + suburb only ---------- */}
-        {featured.length > 0 && (
-          <section className="container-page pt-16 sm:pt-20" aria-labelledby="featured-heading">
-            <h2 id="featured-heading" className="font-display text-display-md text-ink-900">
-              {HOME_COPY.featuredHeading}
-            </h2>
-            <p className="mt-2 max-w-2xl text-[0.9375rem] leading-relaxed text-ink-600">
-              {HOME_COPY.featuredBody}
-            </p>
-            <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {featured.map((home, i) => (
-                <li key={`${home.suburb}-${home.photo ?? "generic"}`}>
-                  <FeaturedHomeCard
-                    suburb={home.suburb}
-                    photo={
-                      home.photo
-                        ? { src: home.photo, alt: `Home in ${home.suburb}` }
-                        : GENERIC_HOME_PHOTOS[i % GENERIC_HOME_PHOTOS.length]
-                    }
-                    isGeneric={!home.photo}
-                  />
-                </li>
-              ))}
-            </ul>
+        {/* ---------------- 02 · Opportunities (olive field) ---------------- */}
+        {homes.length > 0 && (
+          <section id="opportunities" className="scroll-mt-4 bg-olive text-ivory">
+            <div className="nf-wrap grid gap-10 pb-10 pt-20 lg:grid-cols-12 lg:gap-x-10 lg:pt-28">
+              <div className="lg:col-span-3">
+                <SectionLabel n="02" tone="light">{c.opportunitiesLabel}</SectionLabel>
+              </div>
+              <div className="lg:col-span-9">
+                <h2 className="nf-serif max-w-[16ch] text-[clamp(2.25rem,5vw,4.5rem)] font-light leading-[1.02] tracking-[-0.03em]">
+                  {c.opportunitiesHeading}
+                </h2>
+                <p className="mt-6 max-w-[38rem] text-[1.0625rem] leading-[1.7] text-ivory/90">{c.opportunitiesBody}</p>
+              </div>
+            </div>
+            <div className="nf-wrap pb-20 lg:pb-24">
+              <OpportunityIndex
+                cta={c.opportunityCta}
+                items={homes.map((h) => ({ suburb: h.suburb, council: SUBURB_COUNCILS[h.suburb], photo: h.photo }))}
+              />
+            </div>
+            <Streetscape className="block h-14 w-full opacity-60 sm:h-20" />
           </section>
         )}
 
-        {/* ---------- How it works ---------- */}
-        <section className="container-page py-16 sm:py-20">
-          <h2 className="font-display text-display-md text-ink-900">{HOME_COPY.stepsHeading}</h2>
-          <ol className="mt-8 grid gap-6 sm:grid-cols-3">
-            {HOME_COPY.steps.map((step, i) => (
-              <li key={step.title} className="rounded-2xl border border-ink-100 bg-canvas-raised p-6">
-                <span className="font-display text-display-sm text-brass-600" aria-hidden="true">
-                  {i + 1}
-                </span>
-                <h3 className="mt-2 text-base font-semibold text-ink-900">{step.title}</h3>
-                <p className="mt-1.5 text-[0.9375rem] leading-relaxed text-ink-600">{step.body}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        {/* ---------- Photos (only when there are no builder homes above,
-             which already use these stock images) ---------- */}
-        {featured.length === 0 && (
-        <section className="container-page pb-16 sm:pb-20" aria-label="Example homes">
-          <div className="grid gap-4 sm:grid-cols-3">
-            {HOME_PHOTOS.gallery.map((photo) => (
-              <div key={photo.src} className="aspect-[4/3] overflow-hidden rounded-2xl bg-ink-100">
-                <img src={photo.src} alt={photo.alt} loading="lazy" className="h-full w-full object-cover" />
-              </div>
-            ))}
+        {/* ---------------- 03 · Who it's for ---------------- */}
+        <section className="nf-wrap grid gap-10 py-20 lg:grid-cols-12 lg:gap-x-10 lg:py-28">
+          <div className="lg:col-span-3">
+            <SectionLabel n="03">{c.audienceLabel}</SectionLabel>
           </div>
-          <p className="mt-3 text-xs text-ink-400">{HOME_COPY.galleryCaption}</p>
+          <div className="lg:col-span-9">
+            <ul className="nf-serif text-[clamp(2.5rem,6.4vw,5.75rem)] font-light leading-[1.04] tracking-[-0.035em] text-charcoal">
+              {c.audience.map((line, i) => (
+                <li key={line} style={{ paddingLeft: `${i * 0.6}em` }} className={i % 2 ? "italic text-olive" : ""}>
+                  {line}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-10 max-w-[30rem] border-l border-olive pl-5 text-[1.0625rem] leading-[1.7] text-charcoal-graphite">
+              {c.audienceNote}
+            </p>
+          </div>
         </section>
-        )}
 
-        {/* ---------- Closing CTA ---------- */}
-        <section className="bg-ink-900">
-          <div className="container-page flex flex-col items-start gap-6 py-14 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="font-display text-display-md text-canvas">{HOME_COPY.closingHeading}</h2>
-              <p className="mt-2 text-ink-200">{HOME_COPY.closingBody}</p>
+        {/* ---------------- 04 · Process (limestone field) ---------------- */}
+        <section id="process" className="scroll-mt-4 bg-limestone">
+          <div className="nf-wrap grid gap-10 py-20 lg:grid-cols-12 lg:gap-x-10 lg:py-24">
+            <div className="lg:col-span-3">
+              <SectionLabel n="04">{c.processLabel}</SectionLabel>
             </div>
-            <a href="#enquire" className="btn-brass">Get started</a>
+            <ol className="grid gap-0 sm:grid-cols-3 lg:col-span-9">
+              {c.process.map((step, i) => (
+                <li key={step.title} className={`border-t border-charcoal pt-6 sm:pr-8 ${i > 0 ? "mt-10 sm:mt-0" : ""}`}>
+                  <span className="nf-serif block text-[4rem] font-light leading-none text-olive">{i + 1}</span>
+                  <h3 className="mt-6 text-lg font-semibold text-charcoal">{step.title}</h3>
+                  <p className="mt-2 text-[0.9375rem] leading-[1.7] text-charcoal-graphite">{step.body}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* ---------------- 05 · Register ---------------- */}
+        <section id="register" className="scroll-mt-4 bg-ivory-paper">
+          <div className="nf-wrap grid gap-12 py-20 lg:grid-cols-12 lg:gap-x-10 lg:py-28">
+            <div className="lg:col-span-4">
+              <div className="lg:sticky lg:top-10">
+                <SectionLabel n="05">{c.registerLabel}</SectionLabel>
+                <h2 className="nf-serif mt-8 text-[clamp(2.25rem,4.6vw,4rem)] font-light leading-[1.02] tracking-[-0.03em] text-charcoal">
+                  {c.registerHeading}
+                </h2>
+                <p className="mt-6 max-w-sm text-[1.0625rem] leading-[1.7] text-charcoal-graphite">{c.registerBody}</p>
+              </div>
+            </div>
+            <div className="lg:col-span-7 lg:col-start-6">
+              <HomeEnquiryForm suburbs={suburbs} />
+            </div>
           </div>
         </section>
       </main>
 
-      {/* ---------- Footer (legal only) ---------- */}
-      <footer className="border-t border-ink-100 bg-canvas-sunken pb-24 sm:pb-0">
-        <div className="container-page py-8">
-          <p className="text-xs leading-relaxed text-ink-500">{HOME_COPY.disclaimer}</p>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 text-xs text-ink-400">
-            <p>
-              © {new Date().getFullYear()} {SITE.legalName}
-              {SITE.abn ? ` · ABN ${SITE.abn}` : ""}
-            </p>
-            <div className="flex flex-wrap gap-x-5">
-              <Link href="/privacy" className="inline-flex min-h-[44px] items-center hover:text-ink-700">Privacy Policy</Link>
-              <Link href="/terms" className="inline-flex min-h-[44px] items-center hover:text-ink-700">Terms</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      {/* ---------- Sticky mobile CTA ---------- */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-100 bg-canvas-raised/95 p-3 backdrop-blur sm:hidden">
-        <a href="#enquire" className="btn-primary w-full">Get started</a>
-      </div>
-    </>
+      <BrandFooter />
+      <StickyRegister label={c.secondaryCta} />
+    </div>
   );
 }

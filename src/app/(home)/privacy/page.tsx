@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import LegalPage from "@/components/LegalPage";
+import LegalDocument from "@/components/brand/LegalDocument";
 import { PRIVACY_SECTIONS } from "@/lib/content/legal";
 
 export const metadata: Metadata = {
@@ -10,11 +10,11 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalPage
+    <LegalDocument
       title="Privacy Policy"
       intro="We handle personal information in accordance with the Privacy Act 1988 (Cth) and the Australian Privacy Principles."
       sections={PRIVACY_SECTIONS}
-      updated="August 2026"
+      updated="October 2026"
     />
   );
 }

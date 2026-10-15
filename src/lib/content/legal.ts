@@ -23,7 +23,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     paragraphs: ["We collect the information you choose to give us, which typically includes:"],
     bullets: [
       "Your name, email address and phone number",
-      "Your stated investment criteria — property type, budget range, preferred location, priorities, finance position and timeframe",
+      "Your stated property criteria — for example budget range, preferred suburbs or location, timeframe, and where relevant property type, priorities and finance position",
       "Any additional information you include in a message to us",
       "Technical information collected automatically, such as your IP address, browser type, referring page and the pages you visit on this site",
     ],

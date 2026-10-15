@@ -6,9 +6,9 @@ import path from "node:path";
 
 /** The home-buyer landing page's intake, against a throwaway database. */
 const BASE = {
-  homeType: "house",
-  budget: "800k_1m",
-  suburbs: "Brunswick, Coburg",
+  homeType: "townhouse",
+  budget: "900k_1m",
+  suburbs: "Preston, Reservoir",
   timeframe: "asap",
   purpose: "live_in",
   firstName: "Hana",
@@ -45,8 +45,8 @@ describe("home-buyer enquiry", () => {
       consent_marketing: number;
     };
     assert.equal(row.source, "home_landing");
-    assert.match(row.notes_from_lead, /Budget: \$800,000 – \$1M/);
-    assert.match(row.notes_from_lead, /Suburbs: Brunswick, Coburg/);
+    assert.match(row.notes_from_lead, /Budget: \$900,000 – \$1M/);
+    assert.match(row.notes_from_lead, /Suburbs: Preston, Reservoir/);
     assert.equal(row.consent_marketing, 0);
     const queued = db.prepare("SELECT template_key FROM communications WHERE investor_id = ?").all(investorId) as {
       template_key: string;
@@ -58,7 +58,7 @@ describe("home-buyer enquiry", () => {
     const again = service.registerHomeEnquiry({
       ...BASE,
       email: "HANA@example.com",
-      budget: "1m_1_5m",
+      budget: "1_15m_1_3m",
       timeframe: "just_looking",
       consentMarketing: true,
     } as never);
@@ -66,7 +66,7 @@ describe("home-buyer enquiry", () => {
     const row = db.prepare("SELECT notes_from_lead, classification, consent_marketing FROM investors WHERE id = ?").get(
       again.investorId,
     ) as { notes_from_lead: string; classification: string; consent_marketing: number };
-    assert.match(row.notes_from_lead, /\$1M – \$1\.5M/);
+    assert.match(row.notes_from_lead, /\$1\.15M – \$1\.3M/);
     // A later, cooler enquiry doesn't demote a hot lead.
     assert.equal(row.classification, "HOT");
     assert.equal(row.consent_marketing, 1);

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import LegalPage from "@/components/LegalPage";
+import LegalDocument from "@/components/brand/LegalDocument";
 import { TERMS_SECTIONS } from "@/lib/content/legal";
 
 export const metadata: Metadata = {
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalPage
+    <LegalDocument
       title="Terms of Use"
       intro="These terms apply to your access to and use of this website."
       sections={TERMS_SECTIONS}

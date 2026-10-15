@@ -20,6 +20,8 @@
     "social": "node --experimental-strip-types --conditions=react-server --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning --import ./scripts/register-hooks.mjs scripts/make-social.ts"
   },
   "dependencies": {
+    "@fontsource-variable/instrument-sans": "^5.3.0",
+    "@fontsource-variable/newsreader": "^5.3.0",
     "better-sqlite3": "^13.0.3",
     "next": "^15.5.23",
     "react": "^19.2.8",

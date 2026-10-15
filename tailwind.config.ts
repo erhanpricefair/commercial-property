@@ -40,6 +40,15 @@ const config: Config = {
           200: "#E3D5BC",
           100: "#F2EADB",
         },
+        /* NewPF — townhouse brand (home landing page). Contrast-checked:
+           charcoal/graphite/muted on ivory and paper, olive on ivory and
+           limestone, ivory on olive and charcoal all clear WCAG AA. Use
+           graphite, not muted, for small text on limestone (4.4:1). */
+        ivory: { DEFAULT: "#F3EFE6", paper: "#FAF8F3" },
+        limestone: { DEFAULT: "#E3DBCB", deep: "#CFC5B1" },
+        charcoal: { DEFAULT: "#22221F", graphite: "#3B3A35", muted: "#66635A" },
+        olive: { DEFAULT: "#545839", deep: "#3F4229", soft: "#8C8D6A" },
+        brick: "#9A5B43",
         signal: {
           hot: "#8C3A2B",
           warm: "#8A6B3B",
@@ -57,6 +66,8 @@ const config: Config = {
           "Arial",
           "sans-serif",
         ],
+        editorial: ["var(--font-editorial)", "Georgia", "Times New Roman", "serif"],
+        grotesk: ["var(--font-grotesk)", "ui-sans-serif", "Helvetica Neue", "Arial", "sans-serif"],
         display: [
           "ui-serif",
           "Iowan Old Style",

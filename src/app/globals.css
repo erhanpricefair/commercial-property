@@ -114,3 +114,81 @@
     @apply h-px w-full bg-ink-100;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* NewPF — townhouse brand (home landing page + its legal pages).      */
+/* Square edges, thin rules, olive focus. Scoped under `.nf` so the    */
+/* commercial pages and the admin keep their own system.               */
+/* ------------------------------------------------------------------ */
+@layer components {
+  .nf {
+    @apply bg-ivory font-grotesk text-charcoal;
+    font-feature-settings: "kern", "liga", "ss01";
+  }
+  .nf :focus-visible {
+    @apply outline-none ring-2 ring-olive ring-offset-2 ring-offset-ivory;
+  }
+  .nf ::selection {
+    @apply bg-olive text-ivory;
+  }
+
+  .nf-wrap {
+    @apply mx-auto w-full max-w-[84rem] px-5 sm:px-8 lg:px-12;
+  }
+
+  /* Small-caps section label, set against a thin rule. */
+  .nf-kicker {
+    @apply font-grotesk text-[0.6875rem] font-semibold uppercase tracking-[0.2em];
+  }
+
+  .nf-serif {
+    @apply font-editorial;
+    font-optical-sizing: auto;
+  }
+
+  .nf-btn {
+    @apply inline-flex min-h-[3.25rem] items-center justify-center gap-3 rounded-none px-7
+           font-grotesk text-[0.9375rem] font-semibold tracking-[0.01em] transition-colors
+           duration-200 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .nf-btn-primary {
+    @apply nf-btn bg-charcoal text-ivory hover:bg-olive-deep;
+  }
+  .nf-btn-light {
+    @apply nf-btn bg-ivory text-charcoal hover:bg-limestone;
+  }
+
+  /* Text link whose underline draws in from the left on hover. */
+  .nf-link {
+    @apply inline-flex min-h-[3rem] items-center gap-2 font-grotesk text-[0.9375rem] font-semibold;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 100% 1px;
+    background-position: 0 calc(50% + 0.85em);
+    background-repeat: no-repeat;
+    transition: background-size 0.3s ease;
+  }
+  .nf-link:hover {
+    background-size: 0% 1px;
+    background-position: 100% calc(50% + 0.85em);
+  }
+
+  .nf-arrow {
+    @apply inline-block transition-transform duration-300;
+  }
+  .group:hover .nf-arrow,
+  .nf-link:hover .nf-arrow {
+    transform: translateX(4px);
+  }
+
+  .nf-label {
+    @apply mb-2 block font-grotesk text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-charcoal-graphite;
+  }
+  .nf-input {
+    @apply block min-h-[3.25rem] w-full rounded-none border border-limestone-deep bg-ivory-paper px-4 py-3
+           font-grotesk text-base text-charcoal transition-colors placeholder:text-charcoal-muted
+           hover:border-charcoal-muted focus:border-olive focus:outline-none focus:ring-1 focus:ring-olive;
+  }
+  .nf-error {
+    @apply mt-1.5 font-grotesk text-sm text-brick;
+  }
+}

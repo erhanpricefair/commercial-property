@@ -33,10 +33,14 @@ npm run typecheck && npm test && npm run audit:privacy
 
 `src/app` has five root layouts, one per group. This is not cosmetic:
 
-- `(home)` — the front page (`/`): a residential home-buyer lead-generation
-  landing page. Analytics, no navigation, indexed. Copy, form options and
-  photos all live in `src/lib/content/home-landing.ts`; leads post to
-  `/api/home-enquiry` → `services/home-enquiry.ts` and land in the same admin.
+- `(home)` — NewPF (NewPF Business Group Pty Limited): established townhouses
+  in Melbourne's north. The landing page at `/` plus `/privacy` and `/terms`,
+  in the NewPF shell (`components/brand/`). Analytics, no navigation away from
+  the funnel, indexed. Copy and the suburb index live in
+  `src/lib/content/home-landing.ts`; the form's options in
+  `content/home-options.ts`, which is the only content module client
+  components may import (home-landing holds builder approval records). Leads
+  post to `/api/home-enquiry` → `services/home-enquiry.ts`.
 - `(site)` — public marketing. Header, footer, analytics.
 - `(campaign)` — paid landing pages at `/lp/*`. Analytics, no navigation
   (an outbound link leaks a click that was paid for). noindex.
@@ -146,13 +150,19 @@ on carries the form itself (`InlineForm`), not a link to it — a link to
   consider". Never a guarantee, never a comparison claiming one sector is better.
 - Illustrative figures must be labelled illustrative and must not come from a
   real property.
-- Imagery on the commercial pages is abstract SVG, never photography — a photo
-  of a real building can identify a development. The home-buyer landing page
-  uses generic stock photos (Unsplash License) by the owner's choice; they
-  must never be of a home the agency is marketing, and stay labelled
-  "for illustration only". The one exception is `FEATURED_HOMES` in
-  `content/home-landing.ts`: builder homes the builder has cleared for a
-  photo and suburb name only — no address, lot, estate or price. Each entry
-  records who approved it and the evidence, or it isn't shown, and
-  `tests/featured-homes.test.ts` rejects a suburb containing a digit.
+- Imagery is original drawing, never photography — a photo of a real building
+  can identify a development, and the NewPF homes are under builder marketing
+  restrictions. NewPF's artwork (`components/brand/Artwork.tsx`) is generic
+  townhouse massing, brick bond and drafting marks, labelled illustrative. The
+  only exception is a builder-authorised photo on a `FEATURED_HOMES` entry,
+  which also carries the suburb name only — no address, lot, estate or price —
+  and records who approved it and the evidence, or it isn't shown.
+- NewPF claims: only what's verified. "Inner Melbourne" is not used — the
+  current suburbs are 9–12 km north of the CBD. The $900k–$1.3m band is the
+  business's own figure. Don't describe the homes' features (bedrooms,
+  parking, outdoor space) unless true of every home it would describe.
+- NewPF design: ivory / limestone / charcoal / olive tokens, Newsreader +
+  Instrument Sans (self-hosted, `app/(home)/fonts.ts`), square edges, thin
+  rules, numbered sections, colour fields rather than cards. Styles are scoped
+  under `.nf` in globals.css so the commercial pages and admin are unaffected.
 - Tap targets are 48px minimum; the qualification form advances on single-select.
