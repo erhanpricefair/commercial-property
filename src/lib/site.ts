@@ -13,7 +13,7 @@ const BRAND = process.env.NEXT_PUBLIC_SITE_NAME ?? "NewPF";
  * the name exactly as it appears on the licence; until then the site and
  * emails identify the business as the brand alone.
  */
-const LICENSEE = process.env.NEXT_PUBLIC_LICENSEE_NAME ?? "";
+const LICENSEE = process.env.NEXT_PUBLIC_LICENSEE_NAME || "Erhan Seyit";
 
 export const SITE = {
   // Trading under the company's own name: no separate business name to
@@ -38,7 +38,7 @@ export const SITE = {
       : process.env.NEXT_PUBLIC_LEGAL_NAME || LICENSEE || BRAND,
   abn: process.env.NEXT_PUBLIC_ABN ?? "",
   /** Estate agent licence number, shown in the footer and on every email. */
-  licence: process.env.NEXT_PUBLIC_AGENT_LICENCE ?? "",
+  licence: process.env.NEXT_PUBLIC_AGENT_LICENCE || "092111L",
 } as const;
 
 export const DISCLAIMER_SHORT =

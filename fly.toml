@@ -21,6 +21,8 @@ primary_region = "syd"
     # before the first deploy, or canonical URLs and the sitemap will be wrong.
     NEXT_PUBLIC_SITE_URL = "https://yourdomain.com.au"
     NEXT_PUBLIC_SITE_NAME = "NewPF"
+    NEXT_PUBLIC_LICENSEE_NAME = "Erhan Seyit"
+    NEXT_PUBLIC_AGENT_LICENCE = "092111L"
     NEXT_PUBLIC_CONTACT_EMAIL = "invest@yourdomain.com.au"
 
 [env]

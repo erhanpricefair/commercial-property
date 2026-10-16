@@ -35,9 +35,10 @@ npm run typecheck && npm test && npm run audit:privacy
 
 - `(home)` — NewPF: completed builder townhouses in Melbourne's north. The
   owner holds an INDIVIDUAL estate agent's licence (no company licence), so the
-  business is the owner trading as NewPF — never name NewPF Business Group Pty
-  Ltd as the business. Identity comes from `NEXT_PUBLIC_LICENSEE_NAME` and
-  `NEXT_PUBLIC_AGENT_LICENCE`; with neither set the site says "NewPF" alone.
+  business is Erhan Seyit trading as NewPF, licence 092111L — never name
+  NewPF Business Group Pty Ltd as the business. Identity comes from
+  `NEXT_PUBLIC_LICENSEE_NAME` / `NEXT_PUBLIC_AGENT_LICENCE` (defaults in
+  site.ts, also set in fly.toml).
   It introduces buyers; the builder sells. The landing page at `/` plus `/privacy` and `/terms`,
   in the NewPF shell (`components/brand/`). Analytics, no navigation away from
   the funnel, indexed. Copy and the suburb index live in
