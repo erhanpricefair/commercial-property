@@ -30,7 +30,7 @@ them less time than reading the brief.
 Send them:
 
 > The repo is `erhanpricefair/commercial-property`, branch
-> `claude/commercial-property-leads-mfm0zn`. It's a Next.js app with SQLite on
+> `claude/optimistic-cori-p76c47`. It's a Next.js app with SQLite on
 > a persistent volume. `Dockerfile` and `fly.toml` are ready to go. **The
 > filesystem must persist** — it holds the lead database — so not Vercel
 > unless you migrate to Postgres first. Once it's up and the domain points at
@@ -48,7 +48,7 @@ Railway builds straight from GitHub with no terminal.
 
 **2. New Project → Deploy from GitHub repo.** Pick
 `erhanpricefair/commercial-property`, and set the branch to
-`claude/commercial-property-leads-mfm0zn`.
+`claude/optimistic-cori-p76c47`.
 
 **3. Add a volume.** In the service, go to **Variables → Volumes → New Volume**
 and set the mount path to `/data`.
@@ -61,19 +61,20 @@ and set the mount path to `/data`.
 | Variable | Value |
 | --- | --- |
 | `DATABASE_PATH` | `/data/platform.db` |
-| `NEXT_PUBLIC_SITE_URL` | `https://yourdomain.com.au` |
-| `NEXT_PUBLIC_SITE_NAME` | Your business name |
-| `NEXT_PUBLIC_CONTACT_EMAIL` | Your contact email |
-| `OWNER_ALERT_EMAIL` | Where hot-lead alerts should land |
+| `OWNER_ALERT_EMAIL` | `erhan@newpfproperty.com.au` (where hot-lead alerts land) |
 | `ADMIN_SETUP_TOKEN` | Any long random phrase you invent |
+
+The site address, business name, licence and contact details are already set
+in the code (`src/lib/site.ts`) — no need to enter them here.
 
 `ADMIN_SETUP_TOKEN` is a password you'll type once when creating your login.
 Setting it means nobody else can claim the account in the minutes after you
 deploy. Invent something long and keep it handy.
 
-**5. Add your domain.** Settings → Networking → Custom Domain, then add the DNS
-record Railway shows you at your domain registrar. Wait for HTTPS to go green
-before doing anything else — the admin won't log in over plain HTTP.
+**5. Add your domain.** Settings → Networking → Custom Domain → enter
+`www.newpfproperty.com.au`. Railway shows you a CNAME value (it ends in
+`.up.railway.app`) — you'll paste it into GoDaddy in the section
+[Moving newpfproperty.com.au off the GoDaddy site](#moving-newpfpropertycomau-off-the-godaddy-site).
 
 **6. Done.** Everything from here happens in the browser.
 
@@ -87,20 +88,70 @@ You'll need [Node.js](https://nodejs.org) and the
 ```bash
 git clone https://github.com/erhanpricefair/commercial-property.git
 cd commercial-property
-git checkout claude/commercial-property-leads-mfm0zn
+git checkout claude/optimistic-cori-p76c47
 
-# Edit fly.toml: set the app name and NEXT_PUBLIC_* build args first
+# fly.toml is already set up for NewPF (app "newpf-townhouses")
 fly launch --no-deploy --copy-config
 fly volumes create data --size 1 --region syd
-fly secrets set OWNER_ALERT_EMAIL=you@yourdomain.com.au ADMIN_SETUP_TOKEN="a long random phrase"
+fly secrets set OWNER_ALERT_EMAIL=erhan@newpfproperty.com.au ADMIN_SETUP_TOKEN="a long random phrase"
 fly deploy
+fly certs add www.newpfproperty.com.au
 ```
+
+Your CNAME value for GoDaddy (next section) is `newpf-townhouses.fly.dev`.
+
+---
+
+## Moving newpfproperty.com.au off the GoDaddy site
+
+Your domain currently shows a GoDaddy-built website. You're going to point it
+at the new site instead. **Your email (erhan@newpfproperty.com.au) must keep
+working, so you only touch the two things below.**
+
+Do this only after the new site works at its temporary address (the
+`.up.railway.app` or `.fly.dev` one).
+
+**1. Take a screenshot of your DNS first.** GoDaddy → My Products →
+newpfproperty.com.au → **DNS**. Screenshot the whole list of records. If
+anything goes wrong, this is how you put it back.
+
+**2. Leave the email records alone.** In that list, do not edit or delete:
+- anything of type **MX**
+- **TXT** records (especially ones starting `v=spf1`, and any named `_dmarc`)
+- **CNAME** records named `autodiscover`, `email`, `lyncdiscover`, `sip`,
+  `enterpriseregistration` or similar
+
+**3. Point `www` at the new site.** Find the **CNAME** record named **www**
+(it usually says `@` today) → Edit → change the value to your CNAME value
+(the `.up.railway.app` address from Railway, or `newpf-townhouses.fly.dev`)
+→ Save.
+
+> If GoDaddy won't let you edit it because the domain is connected to your
+> GoDaddy website, disconnect the domain in that website's settings first
+> (or ask GoDaddy support: "please disconnect newpfproperty.com.au from my
+> Website Builder site so I can edit the www record — keep my email as is").
+
+**4. Send the bare domain to www.** Same DNS page → **Forwarding** → Add
+forwarding for `newpfproperty.com.au` → forward to
+`https://www.newpfproperty.com.au` → **Permanent (301)** → Save. This means
+people who type it without "www" still arrive.
+
+**5. Wait, then check.** It usually takes from a few minutes to a few hours.
+When `https://www.newpfproperty.com.au` shows the new site with a padlock,
+and you've sent yourself a test email that arrives, you're switched over.
+
+**6. Only then cancel the GoDaddy website plan** — and check the cancellation
+doesn't include your domain or your email, which are separate products.
+
+Old page addresses from the GoDaddy site (`/about-us`, `/contact-us`,
+`/services` and similar) are already redirected to the new home page. If your
+old site had other pages, add their addresses to `next.config.ts`.
 
 ---
 
 ## Then, all in your browser
 
-**1. Create your login.** Visit `https://yourdomain.com.au/admin`. It sends you
+**1. Create your login.** Visit `https://www.newpfproperty.com.au/admin`. It sends you
 to a setup page. Enter your name, email and a password (plus the setup key if
 you set one). **Do this immediately after deploying** — the page closes forever
 the moment you submit.
@@ -143,13 +194,13 @@ backed up from their dashboard; on Fly use
 ## Before you spend money on ads
 
 ```
-npm run audit:privacy -- https://yourdomain.com.au
+npm run audit:privacy -- https://www.newpfproperty.com.au
 ```
 
 That's a terminal command — ask whoever deployed it to run it, or skip it and
 check by hand:
 
-- [ ] `yourdomain.com.au/api/health` shows `ok: true`
+- [ ] `www.newpfproperty.com.au/api/health` shows `ok: true`
 - [ ] Registering on your live site creates a lead in the admin
 - [ ] The hot-lead alert reached your inbox
 - [ ] Signing out and visiting `/admin` sends you to the login page

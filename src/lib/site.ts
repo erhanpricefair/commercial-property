@@ -20,7 +20,7 @@ export const SITE = {
   // register, and nothing in the name implying the business is a builder.
   name: BRAND,
   shortName: process.env.NEXT_PUBLIC_SITE_SHORT_NAME ?? "NewPF",
-  url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com.au").replace(/\/$/, ""),
+  url: (process.env.NEXT_PUBLIC_SITE_URL || "https://www.newpfproperty.com.au").replace(/\/$/, ""),
   tagline: "Access selected commercial property investment opportunities.",
   description:
     "Register your investment criteria and we'll identify commercial property opportunities that may suit your budget, strategy and objectives.",
