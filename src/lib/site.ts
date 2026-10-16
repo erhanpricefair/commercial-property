@@ -24,8 +24,8 @@ export const SITE = {
   tagline: "Access selected commercial property investment opportunities.",
   description:
     "Register your investment criteria and we'll identify commercial property opportunities that may suit your budget, strategy and objectives.",
-  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "invest@example.com.au",
-  phone: process.env.NEXT_PUBLIC_CONTACT_PHONE ?? "",
+  email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "erhan@newpfproperty.com.au",
+  phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "0412 430 920",
   region: "Melbourne, Victoria",
   /** The licensed individual, when set. */
   licenseeName: LICENSEE,

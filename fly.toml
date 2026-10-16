@@ -23,7 +23,8 @@ primary_region = "syd"
     NEXT_PUBLIC_SITE_NAME = "NewPF"
     NEXT_PUBLIC_LICENSEE_NAME = "Erhan Seyit"
     NEXT_PUBLIC_AGENT_LICENCE = "092111L"
-    NEXT_PUBLIC_CONTACT_EMAIL = "invest@yourdomain.com.au"
+    NEXT_PUBLIC_CONTACT_EMAIL = "erhan@newpfproperty.com.au"
+    NEXT_PUBLIC_CONTACT_PHONE = "0412 430 920"
 
 [env]
   PORT = "3000"
