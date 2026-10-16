@@ -94,7 +94,7 @@ type Message = {
  */
 export function complianceFooter(unsubscribeUrl: string): string {
   const identity = [
-    SITE.legalName,
+    SITE.identity,
     SITE.abn ? `ABN ${SITE.abn}` : null,
     SITE.licence ? `Estate agent licence ${SITE.licence}` : null,
     SITE.email,

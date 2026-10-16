@@ -15,7 +15,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
   {
     heading: "What this policy covers",
     paragraphs: [
-      `This policy explains how ${SITE.legalName} ("we", "us") collects, uses, stores and discloses personal information collected through this website. We handle personal information in accordance with the Privacy Act 1988 (Cth) and the Australian Privacy Principles.`,
+      `This policy explains how ${SITE.identity} ("we", "us") collects, uses, stores and discloses personal information collected through this website. We handle personal information in accordance with the Privacy Act 1988 (Cth) and the Australian Privacy Principles.`,
     ],
   },
   {
@@ -126,7 +126,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
   {
     heading: "Intellectual property",
     paragraphs: [
-      `Content on this website is owned by or licensed to ${SITE.legalName} and may not be reproduced without permission, other than for your own personal, non-commercial use.`,
+      `Content on this website is owned by or licensed to ${SITE.identity} and may not be reproduced without permission, other than for your own personal, non-commercial use.`,
     ],
   },
   {

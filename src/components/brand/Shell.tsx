@@ -89,13 +89,22 @@ export function BrandFooter() {
 
           <dl className="grid gap-8 text-sm sm:grid-cols-2 lg:col-span-7 lg:grid-cols-3">
             <div>
-              <dt className="nf-kicker text-limestone-deep">Company</dt>
+              <dt className="nf-kicker text-limestone-deep">{SITE.licenseeName ? "Agent" : "Business"}</dt>
               <dd className="mt-3 leading-relaxed text-ivory">
-                {SITE.legalName}
-                {SITE.abn && <span className="block text-limestone">ABN {SITE.abn}</span>}
-                {SITE.licence && (
-                  <span className="block text-limestone">Estate agent licence {SITE.licence}</span>
+                {SITE.licenseeName ? (
+                  <>
+                    {SITE.licenseeName}
+                    {SITE.licenseeName !== SITE.name && (
+                      <span className="block text-limestone">trading as {SITE.name}</span>
+                    )}
+                    <span className="block text-limestone">
+                      Licensed estate agent{SITE.licence ? `, licence ${SITE.licence}` : ""}
+                    </span>
+                  </>
+                ) : (
+                  SITE.legalName
                 )}
+                {SITE.abn && <span className="block text-limestone">ABN {SITE.abn}</span>}
               </dd>
             </div>
             <div>
@@ -135,7 +144,7 @@ export function BrandFooter() {
           <p className="lg:col-span-5 lg:col-start-8">{HOME_COPY.imageNote}</p>
         </div>
         <p className="mt-8 text-xs text-limestone-deep">
-          © {new Date().getFullYear()} {SITE.legalName}
+          © {new Date().getFullYear()} {SITE.identity}
         </p>
       </div>
     </footer>

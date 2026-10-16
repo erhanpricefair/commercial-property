@@ -33,10 +33,12 @@ npm run typecheck && npm test && npm run audit:privacy
 
 `src/app` has five root layouts, one per group. This is not cosmetic:
 
-- `(home)` — NewPF (NewPF Business Group Pty Ltd, a licensed estate agent —
-  set `NEXT_PUBLIC_AGENT_LICENCE`): completed builder townhouses in
-  Melbourne's north. It trades under the company's own name, so nothing in the
-  name implies it is a builder. It introduces buyers; the builder sells. The landing page at `/` plus `/privacy` and `/terms`,
+- `(home)` — NewPF: completed builder townhouses in Melbourne's north. The
+  owner holds an INDIVIDUAL estate agent's licence (no company licence), so the
+  business is the owner trading as NewPF — never name NewPF Business Group Pty
+  Ltd as the business. Identity comes from `NEXT_PUBLIC_LICENSEE_NAME` and
+  `NEXT_PUBLIC_AGENT_LICENCE`; with neither set the site says "NewPF" alone.
+  It introduces buyers; the builder sells. The landing page at `/` plus `/privacy` and `/terms`,
   in the NewPF shell (`components/brand/`). Analytics, no navigation away from
   the funnel, indexed. Copy and the suburb index live in
   `src/lib/content/home-landing.ts`; the form's options in

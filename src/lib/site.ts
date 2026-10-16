@@ -4,10 +4,21 @@
  * and nothing here is derived from the private opportunity database.
  */
 
+const BRAND = process.env.NEXT_PUBLIC_SITE_NAME ?? "NewPF";
+
+/**
+ * Who the business legally is. The owner holds an individual estate agent's
+ * licence (not a company licence), so the business is the owner trading as
+ * NewPF — not NewPF Business Group Pty Ltd. Set NEXT_PUBLIC_LICENSEE_NAME to
+ * the name exactly as it appears on the licence; until then the site and
+ * emails identify the business as the brand alone.
+ */
+const LICENSEE = process.env.NEXT_PUBLIC_LICENSEE_NAME ?? "";
+
 export const SITE = {
   // Trading under the company's own name: no separate business name to
   // register, and nothing in the name implying the business is a builder.
-  name: process.env.NEXT_PUBLIC_SITE_NAME ?? "NewPF",
+  name: BRAND,
   shortName: process.env.NEXT_PUBLIC_SITE_SHORT_NAME ?? "NewPF",
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://example.com.au").replace(/\/$/, ""),
   tagline: "Access selected commercial property investment opportunities.",
@@ -16,7 +27,15 @@ export const SITE = {
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "invest@example.com.au",
   phone: process.env.NEXT_PUBLIC_CONTACT_PHONE ?? "",
   region: "Melbourne, Victoria",
-  legalName: process.env.NEXT_PUBLIC_LEGAL_NAME ?? "NewPF Business Group Pty Ltd",
+  /** The licensed individual, when set. */
+  licenseeName: LICENSEE,
+  /** The name the business is identified by in policies, footers and emails. */
+  legalName: process.env.NEXT_PUBLIC_LEGAL_NAME || LICENSEE || BRAND,
+  /** How the business names itself in prose: "Jane Citizen trading as NewPF". */
+  identity:
+    LICENSEE && LICENSEE !== BRAND && !process.env.NEXT_PUBLIC_LEGAL_NAME
+      ? `${LICENSEE} trading as ${BRAND}`
+      : process.env.NEXT_PUBLIC_LEGAL_NAME || LICENSEE || BRAND,
   abn: process.env.NEXT_PUBLIC_ABN ?? "",
   /** Estate agent licence number, shown in the footer and on every email. */
   licence: process.env.NEXT_PUBLIC_AGENT_LICENCE ?? "",
