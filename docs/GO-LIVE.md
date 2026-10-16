@@ -111,9 +111,23 @@ working, so you only touch the two things below.**
 Do this only after the new site works at its temporary address (the
 `.up.railway.app` or `.fly.dev` one).
 
-**1. Take a screenshot of your DNS first.** GoDaddy → My Products →
-newpfproperty.com.au → **DNS**. Screenshot the whole list of records. If
-anything goes wrong, this is how you put it back.
+**0. Find where your DNS is managed.** The domain is registered with **Crazy
+Domains**, but the website was built on **GoDaddy**, so the DNS records (the
+settings that say where the domain points) could be in either place. Check:
+log in to Crazy Domains → your domain → **Nameservers** (the wording may
+differ).
+- Nameservers that mention **domaincontrol.com** (GoDaddy's) → the records
+  are at GoDaddy. Follow the steps below exactly as written.
+- Nameservers that mention **Crazy Domains** → the records are at Crazy
+  Domains. Follow the same steps below, but in Crazy Domains' DNS editor.
+
+Either way, **keep the domain renewing at Crazy Domains.** If the domain
+lapses, both the website and your email address stop working.
+
+**1. Take a screenshot of your DNS first.** In whichever place you found in
+step 0 (GoDaddy → My Products → newpfproperty.com.au → **DNS**, or the Crazy
+Domains DNS page), screenshot the whole list of records. If anything goes
+wrong, this is how you put it back.
 
 **2. Leave the email records alone.** In that list, do not edit or delete:
 - anything of type **MX**
@@ -140,8 +154,13 @@ people who type it without "www" still arrive.
 When `https://www.newpfproperty.com.au` shows the new site with a padlock,
 and you've sent yourself a test email that arrives, you're switched over.
 
-**6. Only then cancel the GoDaddy website plan** — and check the cancellation
-doesn't include your domain or your email, which are separate products.
+**6. Then deal with the GoDaddy website plan.** It is prepaid until
+22 July 2029 ($979.09 paid 23 July 2024), so it costs nothing more. Switch off
+**auto-renew** on it, and on the Standard SSL certificate (renews 11 June
+2027, about $184), so neither charges you again. Only cancel the website plan
+early if GoDaddy agrees to refund the unused part. The domain is at Crazy
+Domains, so cancelling the plan doesn't touch it. Check your email still
+works afterwards.
 
 Old page addresses from the GoDaddy site (`/about-us`, `/contact-us`,
 `/services` and similar) are already redirected to the new home page. If your
